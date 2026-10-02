@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive Engineering</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+      --accent: #0b5fff;
+      --border: #e2e2e2;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #14161a;
+        --text: #ececec;
+        --muted: #a0a4ab;
+        --accent: #6aa0ff;
+        --border: #2d3138;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+    }
+    main {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 4rem 1rem;
+    }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+    .lead { color: var(--muted); margin: 0 0 2.5rem; }
+    h2 { font-size: 1.1rem; margin: 0 0 1rem; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 0.75rem 0; border-top: 1px solid var(--border); }
+    li:last-child { border-bottom: 1px solid var(--border); }
+    .soon { color: var(--muted); font-size: 0.9rem; }
+    footer { margin-top: 3rem; color: var(--muted); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Interactive Engineering</h1>
+    <p class="lead">Hands-on explainers for engineering and math ideas. Each page is a small interactive you can play with.</p>
+
+    <h2>Topics</h2>
+    <ul>
+      <li>Euler's identity <span class="soon">(coming soon)</span></li>
+      <li>VSWR <span class="soon">(coming soon)</span></li>
+      <li>Fourier series <span class="soon">(coming soon)</span></li>
+    </ul>
+
+    <footer>First page. If you can read this, the site is working.</footer>
+  </main>
+</body>
+</html>
