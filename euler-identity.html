@@ -3,49 +3,2104 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Euler's Identity | If You're Looking for Vibe Coding and AI Slop, You've Come to the Right Place!</title>
+  <title>Euler's Identity and the Fourier World | If You're Looking for Vibe Coding and AI Slop, You've Come to the Right Place!</title>
+  <meta name="description" content="An interactive tour from one spinning arrow (Euler's identity) to the Fourier series, the Fourier transform, sampling, modulation, and linear systems.">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
   <style>
+    /* ==========================================================
+       Design tokens. Series colors are the validated dark-mode
+       categorical set; the "-t" variants are lighter tints used
+       only for TEXT so it stays readable on the dark surface.
+       Color meaning is the same everywhere on this page:
+         blue    = real part / cosine / in-phase
+         orange  = imaginary part / sine / quadrature
+         green   = the complex number itself / phasor / sum
+         yellow  = angle, highlight, harmonics
+         violet  = second signal / alternate
+         magenta = error / alias
+       ========================================================== */
     :root {
-      --bg: #ffffff;
-      --text: #1a1a1a;
-      --muted: #5c5c5c;
-      --accent: #0b5fff;
-      --border: #e2e2e2;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #14161a;
-        --text: #ececec;
-        --muted: #a0a4ab;
-        --accent: #6aa0ff;
-        --border: #2d3138;
-      }
+      --bg: #0b0f1c;
+      --card: #121a2e;
+      --card2: #17213a;
+      --ink: #e8ecf5;
+      --muted: #9aa6c0;
+      --line: #26314d;
+      --blue: #3987e5;    --blue-t: #6aa5f0;
+      --orange: #d95926;  --orange-t: #f0865a;
+      --green: #199e70;   --green-t: #3cc593;
+      --yellow: #c98500;  --yellow-t: #e8ac2c;
+      --violet: #9085e9;  --violet-t: #b3abf6;
+      --magenta: #d55181; --magenta-t: #ec88ac;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 72px; }
     body {
       margin: 0;
       background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.6;
+      color: var(--ink);
+      font: 17px/1.72 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
-    main {
-      max-width: 40rem;
-      margin: 0 auto;
-      padding: 4rem 1rem;
+    body::before {            /* soft color glows behind everything */
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(900px 500px at 10% -5%, rgba(57,135,229,.16), transparent 60%),
+        radial-gradient(800px 500px at 95% 8%, rgba(25,158,112,.12), transparent 60%),
+        radial-gradient(900px 600px at 50% 110%, rgba(217,89,38,.10), transparent 60%);
     }
-    a { color: var(--accent); }
-    h1 { font-size: 2rem; margin: 1.5rem 0 0.5rem; }
-    .formula { font-size: 1.6rem; margin: 1.5rem 0; }
-    .note { color: var(--muted); border-top: 1px solid var(--border); padding-top: 1rem; }
+    a { color: var(--blue-t); }
+    p { margin: 1em 0; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    /* ---------- top bar + progress ---------- */
+    .topbar { position: sticky; top: 0; z-index: 50; background: rgba(11,15,28,.88);
+              backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+              border-bottom: 1px solid var(--line); }
+    .topbar .in { display: flex; align-items: center; gap: 14px; max-width: 1000px;
+                  margin: 0 auto; padding: 9px 20px; }
+    .back { white-space: nowrap; font-size: .9rem; text-decoration: none; color: var(--muted); }
+    .back:hover { color: var(--ink); }
+    .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chips a { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+               font-size: .8rem; font-weight: 600; color: var(--muted); text-decoration: none;
+               border: 1px solid var(--line); transition: all .15s; }
+    .chips a:hover { color: var(--ink); border-color: var(--muted); }
+    .chips a.on { background: linear-gradient(135deg, var(--blue), var(--green)); color: #03101a; border-color: transparent; }
+    .progress { height: 3px; width: 0; background: linear-gradient(90deg, var(--blue), var(--green), var(--yellow), var(--orange)); }
+
+    /* ---------- hero ---------- */
+    .hero { padding: 54px 0 10px; }
+    .eyebrow { color: var(--green-t); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: .78rem; }
+    h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.08; margin: .25em 0 .3em; letter-spacing: -.02em;
+         background: linear-gradient(100deg, #fff 10%, var(--blue-t) 45%, var(--green-t) 80%);
+         -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lead { font-size: 1.18rem; color: #c9d1e4; max-width: 46em; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 8px; }
+    .pill { font-size: .82rem; padding: 4px 11px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); background: rgba(255,255,255,.03); }
+    .hero-cv { margin-top: 22px; background: linear-gradient(180deg, var(--card2), var(--card)); border: 1px solid var(--line);
+               border-radius: 16px; padding: 8px; }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin: 26px 0 0; padding: 0; list-style: none; }
+    .toc a { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; text-decoration: none;
+             color: var(--ink); background: rgba(255,255,255,.03); border: 1px solid var(--line); font-size: .95rem; line-height: 1.35; }
+    .toc a:hover { border-color: var(--blue); background: rgba(57,135,229,.08); }
+    .toc b { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: .8rem;
+             background: var(--line); color: var(--ink); }
+
+    /* ---------- sections ---------- */
+    section.sec { margin: 84px 0; }
+    .sec-h { display: flex; align-items: center; gap: 14px; margin-bottom: .4em; }
+    .num { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 1.15rem;
+           color: #03101a; background: linear-gradient(135deg, var(--blue), var(--green)); }
+    h2 { font-size: clamp(1.55rem, 3.6vw, 2.15rem); line-height: 1.2; margin: 0; letter-spacing: -.01em; }
+    h3 { font-size: 1.15rem; margin: 1.8em 0 .3em; color: var(--yellow-t); }
+    h4 { margin: 0; font-size: 1rem; }
+    .kicker { color: var(--muted); font-size: 1.02rem; margin: 0 0 .6em 58px; }
+    @media (max-width: 560px) { .kicker { margin-left: 0; } }
+    .eq { overflow-x: auto; overflow-y: hidden; padding: .1em 0; }
+    .katex { font-size: 1.1em; }
+    .katex-display { margin: .7em 0; }
+    .hl-b { color: var(--blue-t); }  .hl-o { color: var(--orange-t); }  .hl-g { color: var(--green-t); }
+    .hl-y { color: var(--yellow-t); } .hl-v { color: var(--violet-t); } .hl-m { color: var(--magenta-t); }
+
+    .fig { margin: 1.8em 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+    .fig img { width: 100%; height: auto; display: block; border-radius: 8px; }
+    .fig.narrow img { max-width: 440px; margin: 0 auto; }
+    .fig figcaption { color: var(--muted); font-size: .9rem; margin-top: 10px; line-height: 1.5; }
+
+    .callout { border-left: 4px solid var(--yellow); background: rgba(201,133,0,.09); padding: 12px 18px; border-radius: 0 12px 12px 0; margin: 1.5em 0; }
+    .callout.take { border-color: var(--green); background: rgba(25,158,112,.10); }
+    .callout.try { border-color: var(--blue); background: rgba(57,135,229,.10); }
+    .callout p { margin: .45em 0; }
+    .callout strong.t { display: block; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+    details.deeper { border: 1px dashed var(--violet); border-radius: 14px; padding: 4px 18px; margin: 1.6em 0; background: rgba(144,133,233,.06); }
+    details.deeper > summary { cursor: pointer; padding: 10px 0; color: var(--violet-t); font-weight: 700; list-style: none; }
+    details.deeper > summary::-webkit-details-marker { display: none; }
+    details.deeper > summary::before { content: "▸ "; }
+    details.deeper[open] > summary::before { content: "▾ "; }
+
+    table.props { width: 100%; border-collapse: collapse; margin: 1.4em 0; font-size: .95rem; }
+    table.props th, table.props td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+    table.props th { color: var(--muted); font-weight: 600; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+
+    /* ---------- interactive labs ---------- */
+    .lab { margin: 2em -4px; background: linear-gradient(180deg, var(--card2), var(--card)); border: 1px solid var(--line);
+           border-radius: 18px; box-shadow: 0 14px 44px rgba(0,0,0,.4); overflow: hidden; }
+    .lab-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.025); }
+    .lab-tag { background: linear-gradient(90deg, var(--blue), var(--green)); color: #03101a; font-weight: 800; font-size: .7rem;
+               letter-spacing: .1em; text-transform: uppercase; padding: 3px 10px; border-radius: 99px; }
+    .lab-body { padding: 14px 16px 16px; }
+    .cv { min-width: 0; width: 100%; }
+    canvas { display: block; }
+    .cv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-top: 10px; }
+    @media (max-width: 640px) { .cv-grid { grid-template-columns: 1fr !important; } }
+    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px 26px; margin-top: 14px; align-items: center; }
+    .ctl { display: grid; grid-template-columns: minmax(3.4em, auto) 1fr minmax(5.2em, auto); gap: 10px; align-items: center; font-size: .93rem; }
+    .ctl .name { color: var(--muted); }
+    .ctl output { font-variant-numeric: tabular-nums; text-align: right; color: var(--ink); font-size: .9rem; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .chk { display: flex; align-items: center; gap: 8px; font-size: .93rem; color: var(--ink); cursor: pointer; }
+    .chk input { width: 17px; height: 17px; accent-color: var(--green); }
+    .btn { font: inherit; font-size: .88rem; color: var(--ink); background: rgba(255,255,255,.05); border: 1px solid var(--line);
+           border-radius: 99px; padding: 6px 14px; cursor: pointer; transition: all .12s; }
+    .btn:hover { border-color: var(--blue); background: rgba(57,135,229,.12); }
+    .btn[aria-pressed="true"] { background: rgba(25,158,112,.22); border-color: var(--green); color: #d8fff0; }
+    .btn.snd::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; background: var(--muted); vertical-align: baseline; }
+    .btn.snd[aria-pressed="true"]::before { background: var(--green-t); box-shadow: 0 0 8px var(--green-t); }
+    select { font: inherit; font-size: .92rem; color: var(--ink); background: #0e1527; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+    input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 26px; background: transparent; cursor: pointer; margin: 0; }
+    input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 99px; background: linear-gradient(90deg, #2c3a5e, #31446f); }
+    input[type=range]::-moz-range-track { height: 6px; border-radius: 99px; background: linear-gradient(90deg, #2c3a5e, #31446f); }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; margin-top: -7px;
+           background: #e8ecf5; border: 3px solid var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+    input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #e8ecf5; border: 3px solid var(--blue); }
+    input[type=range]:focus-visible { outline: 2px solid var(--blue-t); outline-offset: 2px; border-radius: 8px; }
+    .readout { margin-top: 14px; padding: 11px 14px; border-radius: 12px; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.04);
+               font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .86rem; line-height: 1.75; overflow-x: auto; }
+    .readout .b { color: var(--blue-t); } .readout .o { color: var(--orange-t); } .readout .g { color: var(--green-t); }
+    .readout .y { color: var(--yellow-t); } .readout .v { color: var(--violet-t); } .readout .m { color: var(--magenta-t); }
+    .readout .dim { color: var(--muted); }
+    .only-burst { display: none; }
+    .lab.is-burst .only-burst { display: grid; }
+    .hint { color: var(--muted); font-size: .86rem; margin: 10px 2px 0; }
+
+    footer.end { margin: 90px 0 60px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
 <body>
-  <main>
-    <a href="index.html">&larr; All topics</a>
-    <h1>Euler's identity</h1>
-    <p class="formula">e<sup>i&pi;</sup> + 1 = 0</p>
-    <p class="note">This page is a placeholder. The interactive explainer is coming.</p>
+  <div class="topbar">
+    <div class="in">
+      <a class="back" href="index.html">&larr; All topics</a>
+      <nav class="chips" aria-label="Sections">
+        <a href="#s1" data-sec="s1">1</a><a href="#s2" data-sec="s2">2</a><a href="#s3" data-sec="s3">3</a>
+        <a href="#s4" data-sec="s4">4</a><a href="#s5" data-sec="s5">5</a><a href="#s6" data-sec="s6">6</a>
+        <a href="#s7" data-sec="s7">7</a><a href="#s8" data-sec="s8">8</a><a href="#s9" data-sec="s9">9</a>
+        <a href="#s10" data-sec="s10">10</a><a href="#s11" data-sec="s11">11</a>
+      </nav>
+    </div>
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <main class="wrap">
+
+    <!-- ===================================================== HERO -->
+    <header class="hero">
+      <div class="eyebrow">An interactive tour</div>
+      <h1>Euler's Identity, Phasors &amp; the Fourier World</h1>
+      <p class="lead">One spinning arrow explains why a cosine is a pair of rotating phasors, why every periodic wave is a stack of circles, why filters, radios and the FFT all work the way they do. Start with the unit circle; finish with sampling theory, modulation, and the reason linear systems speak complex exponentials. Everything with a slider is live. Poke it.</p>
+      <div class="meta">
+        <span class="pill">11 interactive labs</span>
+        <span class="pill">7 figures</span>
+        <span class="pill">3 labs make sound</span>
+        <span class="pill">undergrad &rarr; grad, in order</span>
+      </div>
+      <div class="hero-cv" id="hero"><div class="cv"><canvas data-cv="main" aria-label="Animation: a chain of rotating circles whose tip traces a square wave"></canvas></div></div>
+      <p class="hint">That animation is a square wave being built from seven spinning circles. By Section 6 you'll be driving it yourself.</p>
+
+      <ol class="toc">
+        <li><a href="#s1"><b>1</b>The spinning arrow</a></li>
+        <li><a href="#s2"><b>2</b>Why it's true: a recipe in powers</a></li>
+        <li><a href="#s3"><b>3</b>The identity, and the algebra of turns</a></li>
+        <li><a href="#s4"><b>4</b>Phasors: arrows that spin in time</a></li>
+        <li><a href="#s5"><b>5</b>Roots of unity: hidden orthogonality</a></li>
+        <li><a href="#s6"><b>6</b>Fourier series: waves from circles</a></li>
+        <li><a href="#s7"><b>7</b>Finding the ingredients: wind it up</a></li>
+        <li><a href="#s8"><b>8</b>Time and frequency: a seesaw</a></li>
+        <li><a href="#s9"><b>9</b>Sampling, aliasing and the DFT</a></li>
+        <li><a href="#s10"><b>10</b>Modulation: moving spectra around</a></li>
+        <li><a href="#s11"><b>11</b>Why everything speaks this language</a></li>
+      </ol>
+      <div class="callout" style="margin-top:28px">
+        <p><strong>Two conventions.</strong> Engineers write \(j=\sqrt{-1}\) because \(i\) is already taken by current, so I'll use \(j\). And the colors mean the same thing everywhere on this page: <span class="hl-b">blue</span> is the real part (cosine), <span class="hl-o">orange</span> is the imaginary part (sine), <span class="hl-g">green</span> is the complex number or phasor itself, <span class="hl-y">yellow</span> marks angles and harmonics.</p>
+        <p>Three labs play sound. Your volume is your own business, but start low.</p>
+      </div>
+    </header>
+
+    <!-- ===================================================== 1 -->
+    <section class="sec" id="s1">
+      <div class="sec-h"><span class="num">1</span><h2>The spinning arrow</h2></div>
+      <p class="kicker">Basic idea: a number that carries an angle.</p>
+
+      <p>Start with something you've known since trigonometry: pick an angle \(\theta\), walk that far around the unit circle from the point \((1,0)\), and you land on \((\cos\theta,\ \sin\theta)\). Now do the one thing that makes this whole page possible: treat the plane as the <em>complex</em> plane, with the horizontal axis for real numbers and the vertical axis for multiples of \(j\). The point becomes the single complex number</p>
+      <div class="eq">\[ \cos\theta + j\sin\theta \;=\; e^{j\theta}. \]</div>
+      <p>That equality is <strong>Euler's formula</strong>. For now, read the right-hand side as a <em>name</em>: \(e^{j\theta}\) is shorthand for "the point on the unit circle at angle \(\theta\)". Section 2 explains why that name is earned, rather than just a convenient label.</p>
+
+      <figure class="fig narrow">
+        <img src="images/fig_euler_plane.png" alt="The complex plane with a unit circle. A green arrow at angle theta points to e^{j theta}. Its horizontal shadow, in blue, has length cos theta, and its vertical shadow, in orange, has length sin theta.">
+        <figcaption><strong>Figure 1.</strong> The arrow \(e^{j\theta}\) and its two shadows. The blue shadow on the real axis is \(\cos\theta\); the orange shadow on the imaginary axis is \(\sin\theta\).</figcaption>
+      </figure>
+
+      <p>Two things fall out immediately. First, the arrow always has length one, since \(\cos^2\theta+\sin^2\theta=1\), so \(|e^{j\theta}|=1\) for every real \(\theta\). Second, as \(\theta\) grows the arrow spins counterclockwise, and a cosine is nothing more than <em>the shadow of a spinning arrow</em>. Lab 1 lets you hold the arrow and drag it.</p>
+
+      <div class="lab" id="w1">
+        <div class="lab-head"><span class="lab-tag">Lab 1</span><h4>The spinning arrow and its shadows</h4></div>
+        <div class="lab-body">
+          <div class="cv"><canvas data-cv="main" aria-label="Interactive unit circle with cosine and sine traces"></canvas></div>
+          <div class="controls">
+            <label class="ctl"><span class="name">&theta;</span><input type="range" data-k="theta" min="-360" max="360" step="1" value="50" data-fmt="degpi"><output></output></label>
+            <div class="btns">
+              <button class="btn" data-act="jump" data-v="0">0</button>
+              <button class="btn" data-act="jump" data-v="90">&pi;/2</button>
+              <button class="btn" data-act="jump" data-v="180">&pi;</button>
+              <button class="btn" data-act="jump" data-v="270">3&pi;/2</button>
+              <button class="btn" data-act="spin" aria-pressed="false">Spin</button>
+            </div>
+          </div>
+          <div class="readout" data-out="read"></div>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Drag &theta; slowly and watch the right-hand panel: the blue and orange curves are just the two shadows, <em>unrolled</em> against angle. Then click the <b>&pi;</b> button and read the last line of the readout. That's the identity this page is named after, and we'll prove it properly in Section 3.</p>
+      </div>
+    </section>
+
+    <!-- ===================================================== 2 -->
+    <section class="sec" id="s2">
+      <div class="sec-h"><span class="num">2</span><h2>Why it's true: a recipe in powers</h2></div>
+      <p class="kicker">Where the exponential comes from.</p>
+
+      <p>Why would the exponential function, which usually means growth and compound interest, have anything to do with circles? Because the exponential can be defined by a <em>recipe</em>, a power series, and the recipe doesn't care whether the input is real:</p>
+      <div class="eq">\[ e^{x} \;=\; 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \frac{x^4}{4!} + \cdots \;=\; \sum_{k=0}^{\infty}\frac{x^k}{k!}. \]</div>
+      <p>Feed it \(x = j\theta\). The powers of \(j\) go around in a four-step cycle, \(j^0=1,\ j^1=j,\ j^2=-1,\ j^3=-j,\) then back to \(1\). So the terms alternate real, imaginary, real, imaginary, and they sort themselves into two families:</p>
+      <div class="eq">\[ e^{j\theta} \;=\; \underbrace{\Big(1 - \frac{\theta^2}{2!} + \frac{\theta^4}{4!} - \cdots\Big)}_{\cos\theta}\;+\; j\,\underbrace{\Big(\theta - \frac{\theta^3}{3!} + \frac{\theta^5}{5!} - \cdots\Big)}_{\sin\theta}. \]</div>
+      <p>Those two brackets are exactly the Taylor series of cosine and sine. Euler's formula isn't a coincidence or a definition; it's the statement that the even terms of the exponential recipe <em>are</em> the cosine and the odd terms <em>are</em> the sine.</p>
+
+      <figure class="fig">
+        <img src="images/fig_taylor_cos.png" alt="Plot of cosine theta in white with Taylor polynomials of degree 2, 6, 10 and 16 hugging it over a progressively wider range around zero.">
+        <figcaption><strong>Figure 2.</strong> Partial sums of the cosine series. Each higher degree stays faithful for longer before flying off. The series always wins eventually, but it takes more terms the farther from zero you go.</figcaption>
+      </figure>
+
+      <p>Lab 2 draws the recipe as a path. Each term \(\dfrac{(j\theta)^k}{k!}\) is an arrow pointing along \(j^k\): right, up, left, down, right, and so on. Chain the arrows tip to tail and the path spirals in on \(e^{j\theta}\).</p>
+
+      <div class="lab" id="w2">
+        <div class="lab-head"><span class="lab-tag">Lab 2</span><h4>Building e<sup>j&theta;</sup> one term at a time</h4></div>
+        <div class="lab-body">
+          <div class="cv-grid" style="grid-template-columns: 1.15fr 1fr">
+            <div class="cv"><canvas data-cv="chain" aria-label="Chain of Taylor series term arrows in the complex plane"></canvas></div>
+            <div class="cv"><canvas data-cv="bars" aria-label="Bar chart of term sizes"></canvas></div>
+          </div>
+          <div class="controls">
+            <label class="ctl"><span class="name">&theta;</span><input type="range" data-k="theta" min="0" max="360" step="1" value="180" data-fmt="degpi"><output></output></label>
+            <label class="ctl"><span class="name">terms</span><input type="range" data-k="N" min="0" max="30" step="1" value="6" data-fmt="int"><output></output></label>
+            <div class="btns"><button class="btn" data-act="grow">Grow the series</button></div>
+          </div>
+          <div class="readout" data-out="read"></div>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Set &theta; to 180&deg; and drag <b>terms</b> up slowly. Notice that the individual arrows get <em>longer</em> before they get shorter (the bar chart peaks around \(k\approx\theta\)), yet the sum still lands on &minus;1. Then try &theta; = 360&deg;: the arrows reach out far past the circle, and the cancellations needed are dramatic.</p>
+      </div>
+
+      <details class="deeper">
+        <summary>Grad aside: a proof with no series at all</summary>
+        <p>The series proof quietly assumes you may substitute \(j\theta\) into a power series. Here's a cleaner argument. Let \(f(\theta) = (\cos\theta + j\sin\theta)\,e^{-j\theta}\), where \(e^{-j\theta}\) is defined only by its property \(\frac{d}{d\theta}e^{a\theta}=a\,e^{a\theta}\). Then</p>
+        <div class="eq">\[ f'(\theta) = (-\sin\theta + j\cos\theta)e^{-j\theta} - j(\cos\theta + j\sin\theta)e^{-j\theta} = e^{-j\theta}\big[-\sin\theta + j\cos\theta - j\cos\theta + \sin\theta\big] = 0. \]</div>
+        <p>So \(f\) is constant, and \(f(0)=1\). Hence \(\cos\theta + j\sin\theta = e^{j\theta}\). The same idea says \(e^{j\theta}\) is the <em>unique</em> solution of \(y' = jy,\ y(0)=1\): "velocity is always a quarter-turn ahead of position," which is exactly what uniform circular motion is.</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 3 -->
+    <section class="sec" id="s3">
+      <div class="sec-h"><span class="num">3</span><h2>The identity, and the algebra of turns</h2></div>
+      <p class="kicker">Half a turn is multiplication by minus one.</p>
+
+      <p>Set \(\theta=\pi\), half a turn around the circle. Then \(\cos\pi=-1\) and \(\sin\pi = 0\), so</p>
+      <div class="eq">\[ e^{j\pi} = -1 \qquad\Longleftrightarrow\qquad e^{j\pi} + 1 = 0. \]</div>
+      <p>That's <strong>Euler's identity</strong>. It is often celebrated for putting five famous constants \((0,1,e,\pi,j)\) in one line, but the real content is geometric: <em>a half turn is multiplication by \(-1\)</em>. Zero, one, and \(-1\) aren't exotic here; they are just where the arrow points after a half turn.</p>
+
+      <figure class="fig narrow">
+        <img src="images/fig_identity_points.png" alt="Unit circle with four arrows at angles 0, pi over 2, pi and 3 pi over 2, labeled 1, j, minus 1 and minus j. The pi arrow is highlighted in yellow with a semicircular arc labeled half turn.">
+        <figcaption><strong>Figure 3.</strong> Four quarter-turn landmarks. Each is the previous one times \(j\): \(1 \to j \to -1 \to -j \to 1\). So \(j^2=-1\) just says "two quarter turns make a half turn."</figcaption>
+      </figure>
+
+      <p>This is why multiplication by \(e^{j\theta}\) is <em>rotation</em>. If \(z_1=r_1e^{j\theta_1}\) and \(z_2=r_2e^{j\theta_2}\), the exponent rule \(e^{a}e^{b}=e^{a+b}\) gives</p>
+      <div class="eq">\[ z_1z_2 \;=\; r_1r_2\,e^{j(\theta_1+\theta_2)}: \qquad \text{magnitudes multiply, angles add.} \]</div>
+      <p>And that single line contains the angle-addition formulas of trigonometry. Multiply out \((\cos a + j\sin a)(\cos b + j\sin b)\) and compare real and imaginary parts with \(e^{j(a+b)}\) and you get \(\cos(a+b)=\cos a\cos b-\sin a\sin b\) and \(\sin(a+b)=\sin a\cos b + \cos a\sin b\) for free, no triangles required.</p>
+
+      <div class="lab" id="w3">
+        <div class="lab-head"><span class="lab-tag">Lab 3</span><h4>Multiplying arrows: magnitudes multiply, angles add</h4></div>
+        <div class="lab-body">
+          <div class="cv"><canvas data-cv="main" aria-label="Two arrows z1 and z2 and their product in the complex plane"></canvas></div>
+          <div class="controls">
+            <label class="ctl"><span class="name hl-y">r&#8321;</span><input type="range" data-k="r1" min="0.2" max="1.5" step="0.05" value="1" data-dec="2"><output></output></label>
+            <label class="ctl"><span class="name hl-y">&theta;&#8321;</span><input type="range" data-k="t1" min="-180" max="180" step="1" value="40" data-fmt="deg"><output></output></label>
+            <label class="ctl"><span class="name hl-v">r&#8322;</span><input type="range" data-k="r2" min="0.2" max="1.5" step="0.05" value="1" data-dec="2"><output></output></label>
+            <label class="ctl"><span class="name hl-v">&theta;&#8322;</span><input type="range" data-k="t2" min="-180" max="180" step="1" value="70" data-fmt="deg"><output></output></label>
+          </div>
+          <div class="controls" style="margin-top:8px">
+            <div class="btns">
+              <button class="btn" data-act="preset" data-p="j">multiply by <i>j</i></button>
+              <button class="btn" data-act="preset" data-p="neg">multiply by &minus;1</button>
+              <button class="btn" data-act="preset" data-p="sq">square it (z&#8321;&sup2;)</button>
+            </div>
+          </div>
+          <div class="readout" data-out="read"></div>
+        </div>
+      </div>
+
+      <div class="callout take">
+        <strong class="t">Takeaway</strong>
+        <p>Complex numbers in polar form turn rotation and scaling into ordinary multiplication. Hold on to this: <em>everything</em> from here on, phasors, filters, the DFT, modulation, is this one fact applied again and again.</p>
+      </div>
+    </section>
+
+    <!-- ===================================================== 4 -->
+    <section class="sec" id="s4">
+      <div class="sec-h"><span class="num">4</span><h2>Phasors: arrows that spin in time</h2></div>
+      <p class="kicker">From a fixed angle to a signal.</p>
+
+      <p>So far \(\theta\) was just an angle. Let it grow with time, \(\theta = \omega t + \varphi\), and the arrow becomes a spinning phasor. Here \(\omega = 2\pi f\) is the angular frequency in radians per second, \(f\) the frequency in hertz, and \(\varphi\) the starting angle. A real sinusoid is the real part (the shadow) of that phasor:</p>
+      <div class="eq">\[ x(t) = A\cos(\omega t + \varphi) \;=\; \operatorname{Re}\!\big\{\underbrace{A e^{j\varphi}}_{\text{complex amplitude}}\; e^{j\omega t}\big\}. \]</div>
+      <p>The complex amplitude \(Ae^{j\varphi}\) packs size <em>and</em> starting phase into one number, and the spinning part \(e^{j\omega t}\) is the same for every signal at that frequency, so you can drop it. That bookkeeping is why circuit analysts love phasors: differentiation becomes multiplication by \(j\omega\), integration becomes division, and adding two sinusoids of the same frequency is adding two arrows.</p>
+
+      <h3>The surprise: negative frequency</h3>
+      <p>Euler's formula also runs backward. Write it for \(+\theta\) and for \(-\theta\) and add:</p>
+      <div class="eq">\[ \cos\theta = \frac{e^{j\theta}+e^{-j\theta}}{2}, \qquad \sin\theta = \frac{e^{j\theta}-e^{-j\theta}}{2j}. \]</div>
+      <p>So a real cosine at frequency \(f_0\) is secretly <em>two</em> phasors, each with half the amplitude, spinning in opposite directions. One has frequency \(+f_0\), the other \(-f_0\). Their imaginary parts cancel at every instant and their real parts add. "Negative frequency" isn't mysterious. It's the clockwise twin you need so that a real signal stays real.</p>
+
+      <figure class="fig">
+        <img src="images/fig_cos_spectrum.png" alt="Left: a cosine wave over three periods. Right: its two-sided spectrum, two green spikes at minus f0 and plus f0, each labeled one half e to the plus or minus j 2 pi f0 t.">
+        <figcaption><strong>Figure 4.</strong> The same signal two ways. In the time domain it's one cosine. In the frequency domain it's two spikes: counter-rotating phasors at \(\pm f_0\), each of height \(\tfrac12\).</figcaption>
+      </figure>
+
+      <div class="lab" id="w4">
+        <div class="lab-head"><span class="lab-tag">Lab 4</span><h4>The phasor in motion (with sound)</h4></div>
+        <div class="lab-body">
+          <div class="cv"><canvas data-cv="main" aria-label="A rotating phasor with its cosine and sine traces scrolling to the right"></canvas></div>
+          <div class="controls">
+            <label class="ctl"><span class="name">f</span><input type="range" data-k="f" min="100" max="1000" step="5" value="220" data-unit=" Hz"><output></output></label>
+            <label class="ctl"><span class="name">A</span><input type="range" data-k="A" min="0" max="1" step="0.01" value="0.9" data-dec="2"><output></output></label>
+            <label class="ctl"><span class="name">&varphi;</span><input type="range" data-k="phi" min="-180" max="180" step="1" value="0" data-fmt="deg"><output></output></label>
+            <label class="chk"><input type="checkbox" data-k="pair"> Show it as two counter-rotating phasors</label>
+            <div class="btns">
+              <button class="btn" data-act="spin" aria-pressed="true">Spinning</button>
+              <button class="btn snd" data-act="sound" aria-pressed="false">Sound</button>
+            </div>
+          </div>
+          <div class="readout" data-out="read"></div>
+          <p class="hint">Real time is slowed down by &times;200 so you can see the rotation: a 220 Hz tone really makes 220 turns every second. The scope window shows 20 ms of real time. Sound plays the true frequency.</p>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Tick <b>two counter-rotating phasors</b> and watch the green and violet arrows. Their orange (imaginary) shadows always cancel, leaving a pure blue cosine. Then switch the sound on and drag <b>f</b>: pitch is nothing but how fast that arrow spins.</p>
+      </div>
+
+      <details class="deeper">
+        <summary>Grad aside: the analytic signal</summary>
+        <p>Real signals have <em>Hermitian-symmetric</em> spectra, \(X(-f)=X^*(f)\), so the negative-frequency half carries no new information. Throw it away, double the positive half, and the inverse transform gives the <strong>analytic signal</strong> \(x_a(t)=x(t)+j\,\mathcal{H}\{x\}(t)\), where \(\mathcal H\) is the Hilbert transform (a \(-90^\circ\) phase shift at every frequency). It is the single-arrow version of the signal, with \(|x_a(t)|\) the envelope and \(\arg x_a(t)\) the instantaneous phase. This is exactly the object that quadrature (I/Q) receivers build in hardware, and we'll meet it again in Section 10.</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 5 -->
+    <section class="sec" id="s5">
+      <div class="sec-h"><span class="num">5</span><h2>Roots of unity: the hidden orthogonality</h2></div>
+      <p class="kicker">Why different frequencies don't interfere.</p>
+
+      <p>Before frequencies and signals, one clean geometric fact. Slice the circle into \(N\) equal parts and call the first step \(w = e^{j2\pi/N}\). The \(N\) points \(1, w, w^2,\dots,w^{N-1}\) are the <strong>\(N\)th roots of unity</strong>: each satisfies \(w^N=1\). Now ask what they add up to. Taking steps of \(k\) positions at a time:</p>
+      <div class="eq">\[ \sum_{m=0}^{N-1} e^{\,j2\pi km/N} \;=\; \begin{cases} N & k \text{ a multiple of } N,\\[2pt] 0 & \text{otherwise.}\end{cases} \]</div>
+      <p>For \(k\) not a multiple of \(N\) the arrows form a closed polygon (or star) and return to the start, so the sum is exactly zero. A geometric series proves it: the sum is \(\dfrac{1-e^{j2\pi k}}{1-e^{j2\pi k/N}} = 0\). For \(k=0\) every arrow is \(1\) and they stack in a line of length \(N\).</p>
+      <p>This is <em>orthogonality</em>. Multiply one spinning exponential by the conjugate of another and average: if they spin at different rates the product keeps rotating and averages to zero; if they spin at the same rate you get a constant. That is the only reason Fourier analysis can pull one frequency out of a mixture without the others leaking in.</p>
+
+      <div class="lab" id="w5">
+        <div class="lab-head"><span class="lab-tag">Lab 5</span><h4>Roots of unity: do the arrows close?</h4></div>
+        <div class="lab-body">
+          <div class="cv-grid">
+            <div class="cv"><canvas data-cv="circle" aria-label="The N points on the unit circle visited in order"></canvas></div>
+            <div class="cv"><canvas data-cv="chain" aria-label="The N unit arrows chained tip to tail"></canvas></div>
+          </div>
+          <div class="controls">
+            <label class="ctl"><span class="name">N</span><input type="range" data-k="N" min="2" max="16" step="1" value="8" data-fmt="int"><output></output></label>
+            <label class="ctl"><span class="name">k</span><input type="range" data-k="k" min="0" max="16" step="1" value="1" data-fmt="int"><output></output></label>
+            <label class="chk"><input type="checkbox" data-k="animate" checked> Animate the walk</label>
+          </div>
+          <div class="readout" data-out="read"></div>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Leave \(N=8\) and step <b>k</b> from 0 upward. Right is the chain of \(N\) arrows laid tip to tail: for \(k=0\) it's a straight line of length 8, for every other \(k\) it closes into a polygon. Now set \(k=8\): it's a multiple of \(N\), so the sum jumps back to \(N\). The set of \(N\) frequencies you can tell apart is built into the circle.</p>
+      </div>
+
+      <details class="deeper">
+        <summary>Grad aside: the DFT matrix is unitary</summary>
+        <p>Define \(F_{km} = \tfrac{1}{\sqrt N}e^{-j2\pi km/N}\). The orthogonality sum above says exactly \(F^{H}F = I\): the DFT is a <em>unitary</em> change of basis, so it preserves energy (Parseval). Because \(F^2\) is the "reverse the index" permutation, \(F^4=I\) and the eigenvalues of \(F\) can only be \(\pm1,\pm j\): the four quarter-turn landmarks from Figure 3 again.</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 6 -->
+    <section class="sec" id="s6">
+      <div class="sec-h"><span class="num">6</span><h2>Fourier series: waves from circles</h2></div>
+      <p class="kicker">Any periodic signal is a chorus of phasors.</p>
+
+      <p>Take any signal \(x(t)\) that repeats every \(T\) seconds, and let \(\omega_0 = 2\pi/T\). Fourier's claim is that it can be written as a sum of phasors spinning at whole-number multiples of \(\omega_0\), called harmonics:</p>
+      <div class="eq">\[ x(t) \;=\; \sum_{n=-\infty}^{\infty} c_n\, e^{\,j n\omega_0 t}, \qquad c_n \in \mathbb{C}. \]</div>
+      <p>Each term is one arrow with its own radius \(|c_n|\), starting angle \(\arg c_n\), and speed \(n\omega_0\). For real \(x(t)\) the terms at \(+n\) and \(-n\) are conjugate twins, and the pair is a plain cosine: \(2|c_n|\cos(n\omega_0 t + \arg c_n)\).</p>
+      <p>A square wave of unit height has an especially simple recipe, using only odd harmonics and only the sine part:</p>
+      <div class="eq">\[ x(t)=\frac{4}{\pi}\Big(\sin\omega_0 t + \tfrac13\sin 3\omega_0 t + \tfrac15\sin 5\omega_0 t+\cdots\Big). \]</div>
+      <p>Draw each term as a circle whose center rides on the tip of the previous one, and the height of the last tip <em>is</em> the sum. That's an epicycle machine, the picture the hero animation was running. Lab 6 hands you the controls and lets you listen.</p>
+
+      <div class="lab" id="w6">
+        <div class="lab-head"><span class="lab-tag">Lab 6</span><h4>Epicycles: build a wave from spinning circles (with sound)</h4></div>
+        <div class="lab-body">
+          <div class="cv"><canvas data-cv="main" aria-label="A chain of rotating circles whose tip height draws a waveform"></canvas></div>
+          <div class="cv" style="margin-top:8px"><canvas data-cv="spec" aria-label="Harmonic amplitude stems"></canvas></div>
+          <div class="controls">
+            <label class="ctl"><span class="name">wave</span>
+              <select data-k="wave"><option value="square">Square</option><option value="saw">Sawtooth</option><option value="tri">Triangle</option></select><span></span></label>
+            <label class="ctl"><span class="name">harmonics</span><input type="range" data-k="H" min="1" max="39" step="1" value="7" data-fmt="up"><output></output></label>
+            <label class="ctl"><span class="name">speed</span><input type="range" data-k="speed" min="0.05" max="1" step="0.01" value="0.2" data-dec="2" data-unit=" rev/s"><output></output></label>
+            <label class="ctl"><span class="name">f&#8320; (sound)</span><input type="range" data-k="f0" min="110" max="440" step="1" value="220" data-unit=" Hz"><output></output></label>
+            <div class="btns">
+              <button class="btn" data-act="spin" aria-pressed="true">Spinning</button>
+              <button class="btn snd" data-act="sound" aria-pressed="false">Sound</button>
+            </div>
+          </div>
+          <div class="readout" data-out="read"></div>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Start with <b>harmonics = 1</b>: one circle, a plain sine. Now creep upward and watch the corners sharpen. With the sound on, a lone sine is a pure, hollow tone; add harmonics and it becomes buzzy and bright. <em>That brightness is the spectrum</em>: the timbre of an instrument is its set of \(c_n\). Switch to Triangle: its harmonics shrink like \(1/n^2\), so it sounds mellow even with lots of terms.</p>
+      </div>
+
+      <figure class="fig">
+        <img src="images/fig_gibbs.png" alt="Four panels showing a square wave approximated by Fourier partial sums with harmonics up to 1, 3, 9 and 49. The overshoot near each jump narrows but does not shrink; the last panel is annotated roughly 9 percent overshoot.">
+        <figcaption><strong>Figure 5.</strong> The Gibbs phenomenon. More harmonics squeeze the ripples toward the jump, but the overshoot at the edge stays at roughly 9% of the jump height. Fourier sums converge in energy but not uniformly near a discontinuity.</figcaption>
+      </figure>
+
+      <details class="deeper">
+        <summary>Grad aside: Parseval, convergence and windows</summary>
+        <p>Because the exponentials are orthogonal, <strong>Parseval's relation</strong> holds: average power in time equals the sum of the squared magnitudes of the coefficients, \(\tfrac1T\!\int_0^T |x|^2\,dt=\sum_n |c_n|^2\). Convergence is in the \(L^2\) sense for any finite-energy period, pointwise at points of continuity (Dirichlet's conditions), and overshoot appears at jumps (Gibbs). The usual engineering remedy is to taper the coefficients with a window, such as Fej&eacute;r's triangular taper (which averages the partial sums) or a Lanczos sigma factor, trading edge sharpness for the removal of ringing.</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 7 -->
+    <section class="sec" id="s7">
+      <div class="sec-h"><span class="num">7</span><h2>Finding the ingredients: wind it up</h2></div>
+      <p class="kicker">How to measure a frequency component, and the leap to the Fourier transform.</p>
+
+      <p>We know signals are made of phasors. How do we find how much of each is in there? Multiply the signal by a spinning arrow that runs <em>backward</em> at the frequency you're testing, then average:</p>
+      <div class="eq">\[ c_n \;=\; \frac1T\int_0^T x(t)\,e^{-jn\omega_0 t}\,dt. \]</div>
+      <p>Here's why it works. The component of \(x\) that spins at exactly \(n\omega_0\) gets un-spun by \(e^{-jn\omega_0 t}\) and becomes <em>constant</em>; averaging keeps it. Every other component keeps rotating at some leftover rate and averages to zero. That's the orthogonality from Section 5 in continuous clothes.</p>
+      <p>Let the period grow without bound and the harmonics crowd together into a continuum. The sum becomes an integral and the coefficients become a function of frequency, the <strong>Fourier transform</strong>:</p>
+      <div class="eq">\[ X(f) = \int_{-\infty}^{\infty} x(t)\,e^{-j2\pi f t}\,dt, \qquad x(t) = \int_{-\infty}^{\infty} X(f)\,e^{\,j2\pi f t}\,df. \]</div>
+      <p>The "wind it up" picture: draw \(x(t)\,e^{-j2\pi f_w t}\) as a path in the complex plane, which means wrapping the signal around the origin at a winding frequency \(f_w\). The balance point of that path is \(X(f_w)\) (up to scaling). When \(f_w\) matches a frequency in the signal, the wrapped path becomes lopsided and its balance point moves away from the origin.</p>
+
+      <div class="lab" id="w7">
+        <div class="lab-head"><span class="lab-tag">Lab 7</span><h4>The winding machine: finding frequencies by wrapping</h4></div>
+        <div class="lab-body">
+          <div class="cv-grid" style="grid-template-columns: 1fr 1.1fr">
+            <div class="cv"><canvas data-cv="wind" aria-label="The signal wound around the origin at the winding frequency, with its balance point"></canvas></div>
+            <div class="cv"><canvas data-cv="spec" aria-label="Distance of the balance point from the origin as the winding frequency is swept"></canvas></div>
+          </div>
+          <div class="controls">
+            <label class="ctl"><span class="name hl-b">f&#8321;</span><input type="range" data-k="f1" min="0.5" max="8" step="0.5" value="3" data-unit=" Hz" data-dec="1"><output></output></label>
+            <label class="ctl"><span class="name hl-v">f&#8322;</span><input type="range" data-k="f2" min="0.5" max="8" step="0.5" value="5" data-unit=" Hz" data-dec="1"><output></output></label>
+            <label class="ctl"><span class="name hl-v">A&#8322;</span><input type="range" data-k="A2" min="0" max="1.5" step="0.05" value="0.8" data-dec="2"><output></output></label>
+            <label class="ctl"><span class="name hl-g">wind at</span><input type="range" data-k="fw" min="0" max="10" step="0.01" value="3" data-unit=" Hz" data-dec="2"><output></output></label>
+            <div class="btns"><button class="btn" data-act="scan" aria-pressed="false">Scan 0 &rarr; 10 Hz</button></div>
+          </div>
+          <div class="readout" data-out="read"></div>
+          <p class="hint">Signal: x(t) = cos(2&pi;f&#8321;t) + A&#8322;&middot;cos(2&pi;f&#8322;t), observed for 8 seconds.</p>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Press <b>Scan</b>. For most winding frequencies the path is a symmetric flower centered on the origin and the green balance point sits at zero. Whenever the winding frequency hits \(f_1\) or \(f_2\) the flower tips over and the point jumps out, and the right panel draws the spectrum as it goes. Peaks have height \(A/2\) because a real cosine is split between \(+f\) and \(-f\).</p>
+      </div>
+
+      <details class="deeper">
+        <summary>Grad aside: Fourier analysis as projection</summary>
+        <p>On \(L^2[0,T]\) with the inner product \(\langle x,y\rangle = \tfrac1T\int_0^T x\,y^*\,dt\), the exponentials \(e_n(t)=e^{jn\omega_0t}\) are an orthonormal basis, and \(c_n=\langle x,e_n\rangle\) is literally the projection of \(x\) onto \(e_n\). The transform on the whole line is the limit of this picture, but \(e^{j2\pi ft}\) isn't itself in \(L^2(\mathbb R)\), which is why a pure tone's transform is a Dirac delta, a <em>distribution</em>, and why Plancherel's theorem (\(\int|x|^2dt=\int|X|^2df\)) is stated for the extension of \(\mathcal F\) from \(L^1\cap L^2\) to all of \(L^2\).</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 8 -->
+    <section class="sec" id="s8">
+      <div class="sec-h"><span class="num">8</span><h2>Time and frequency: a seesaw</h2></div>
+      <p class="kicker">Squeeze one side and the other spreads.</p>
+
+      <p>Time and frequency are two descriptions of the same signal, and they sit on a seesaw. A pulse that is <em>narrow</em> in time must contain a <em>wide</em> range of frequencies, because sharp features need many harmonics to build. A long, lazy pulse needs only a narrow sliver of the spectrum. Two pairs you should know by heart:</p>
+
+      <figure class="fig">
+        <img src="images/fig_duality_pairs.png" alt="Two rows of two plots. Top: a rectangular pulse and its sinc-shaped spectrum with side lobes. Bottom: a Gaussian pulse and its Gaussian spectrum.">
+        <figcaption><strong>Figure 6.</strong> Rectangle \(\leftrightarrow\) sinc, and Gaussian \(\leftrightarrow\) Gaussian. The rectangle's abrupt edges are why its spectrum rings forever; the Gaussian has no corners, so its spectrum has no side lobes.</figcaption>
+      </figure>
+
+      <p>A short dictionary makes the transform a toolkit instead of an integral. Writing \(x(t)\leftrightarrow X(f)\):</p>
+      <table class="props">
+        <thead><tr><th>In time</th><th>In frequency</th><th>Why you care</th></tr></thead>
+        <tbody>
+          <tr><td>Delay: \(x(t-t_0)\)</td><td>\(e^{-j2\pi f t_0}X(f)\)</td><td>delay is a phase ramp; magnitude unchanged</td></tr>
+          <tr><td>Multiply by \(e^{j2\pi f_0 t}\)</td><td>\(X(f-f_0)\)</td><td>mixing moves a spectrum (Section 10)</td></tr>
+          <tr><td>Squeeze: \(x(at)\)</td><td>\(\tfrac1{|a|}X(f/a)\)</td><td>the seesaw itself</td></tr>
+          <tr><td>Convolve: \(x*h\)</td><td>\(X(f)\,H(f)\)</td><td>filters become multiplication (Section 11)</td></tr>
+          <tr><td>Multiply: \(x\,y\)</td><td>\(X*Y\)</td><td>windowing blurs the spectrum</td></tr>
+          <tr><td>Differentiate: \(x'(t)\)</td><td>\(j2\pi f\,X(f)\)</td><td>derivatives boost high frequencies</td></tr>
+        </tbody>
+      </table>
+
+      <div class="lab" id="w8">
+        <div class="lab-head"><span class="lab-tag">Lab 8</span><h4>Pulse width vs. bandwidth</h4></div>
+        <div class="lab-body">
+          <div class="cv-grid">
+            <div class="cv"><canvas data-cv="time" aria-label="Time-domain pulse"></canvas></div>
+            <div class="cv"><canvas data-cv="freq" aria-label="Magnitude spectrum of the pulse"></canvas></div>
+          </div>
+          <div class="controls">
+            <label class="ctl"><span class="name">shape</span>
+              <select data-k="shape"><option value="rect">Rectangle</option><option value="tri">Triangle</option><option value="gauss">Gaussian</option><option value="burst">Tone burst (Gaussian &times; cosine)</option></select><span></span></label>
+            <label class="ctl"><span class="name">width</span><input type="range" data-k="tau" data-log="1" min="-1.3" max="0.3" step="0.01" value="-0.3" data-unit=" s" data-dec="2"><output></output></label>
+            <label class="ctl only-burst"><span class="name">tone f&#8320;</span><input type="range" data-k="f0" min="1" max="5" step="0.1" value="2.5" data-unit=" Hz" data-dec="1"><output></output></label>
+            <label class="chk"><input type="checkbox" data-k="db"> Spectrum in decibels</label>
+          </div>
+          <div class="readout" data-out="read"></div>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Drag <b>width</b> down: the pulse gets thin and its spectrum swells outward. Tick <b>decibels</b> on the Rectangle to expose the side lobes, and flip to the Gaussian, where they vanish. Finally pick <b>Tone burst</b>: the same Gaussian spectrum reappears, but centered at \(\pm f_0\). That's the shift rule in the table. Multiplying by a tone moved the spectrum.</p>
+      </div>
+
+      <div class="callout take">
+        <strong class="t">The uncertainty principle</strong>
+        <p>The seesaw is exact. Define the spread of \(x\) in time and \(X\) in frequency by the RMS widths \(\sigma_t\) and \(\sigma_f\) of \(|x|^2\) and \(|X|^2\). Then</p>
+        <div class="eq">\[ \sigma_t\,\sigma_f \;\ge\; \frac{1}{4\pi}, \]</div>
+        <p>with equality only for the Gaussian. This is the same inequality as Heisenberg's, with nothing quantum about it: it is a statement about waves.</p>
+      </div>
+
+      <details class="deeper">
+        <summary>Grad aside: where the bound comes from</summary>
+        <p>Take \(x\) with unit energy and zero mean time and frequency. Since \(\mathcal F\{x'\}=j2\pi f X\), Plancherel gives \(\sigma_f^2 = \tfrac{1}{4\pi^2}\|x'\|^2\) and \(\sigma_t^2=\|t\,x\|^2\). Cauchy&ndash;Schwarz gives \(\|t x\|\,\|x'\|\ge |\langle t x, x'\rangle|\ge \tfrac12\), because \(\operatorname{Re}\langle tx,x'\rangle=\tfrac12\int t\,(|x|^2)'dt=-\tfrac12\|x\|^2\) after integrating by parts. Equality needs \(x'\propto t\,x\), whose solution is a Gaussian. The practical consequence is the <strong>time&ndash;frequency tradeoff</strong> every spectrogram faces: a short window localizes in time but blurs frequency, and vice versa.</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 9 -->
+    <section class="sec" id="s9">
+      <div class="sec-h"><span class="num">9</span><h2>Sampling, aliasing and the DFT</h2></div>
+      <p class="kicker">What happens when a computer looks at a continuous world.</p>
+
+      <p>A computer sees a signal only at instants \(t = n/f_s\), where \(f_s\) is the sampling rate. Here's the beautiful and slightly alarming result: <strong>sampling in time makes copies in frequency</strong>. If \(x(t)\) has spectrum \(X(f)\), the sampled signal has spectrum</p>
+      <div class="eq">\[ X_s(f) \;=\; f_s\sum_{k=-\infty}^{\infty} X(f - k f_s) \quad\text{(up to the sampling-interval normalization)}, \]</div>
+      <p>a copy of the original spectrum centered at every multiple of \(f_s\). If the original lives within \(|f|<f_s/2\), the copies don't touch, and you lose nothing: this is the <strong>Nyquist&ndash;Shannon</strong> condition \(f_s>2B\). If it doesn't, the copies overlap, and a frequency above \(f_s/2\) shows up wearing a disguise at a lower frequency:</p>
+      <div class="eq">\[ f_{\text{alias}} \;=\; f_0 - f_s\cdot\operatorname{round}\!\big(f_0/f_s\big). \]</div>
+
+      <figure class="fig">
+        <img src="images/fig_aliasing_fold.png" alt="Frequency axis showing spectral lines at plus and minus 7 Hz in blue and replicas every 10 Hz in magenta. The shaded baseband runs from minus 5 to 5 Hz and contains a magenta line at plus and minus 3 Hz, the alias.">
+        <figcaption><strong>Figure 7.</strong> A 7 Hz tone sampled at 10 Hz. Its replicas land at \(7-10=-3\) Hz and \(-7+10=3\) Hz, inside the shaded baseband. After sampling, the 7 Hz tone is indistinguishable from a 3 Hz one.</figcaption>
+      </figure>
+
+      <p>You've seen aliasing in movies: the wagon wheel that appears to turn slowly backward. A camera is a sampler. In phasor language it's simple: each frame the arrow has turned by \(2\pi f_0/f_s\) radians, but your eye can only tell the turn <em>modulo</em> a full circle, and takes the smallest equivalent angle.</p>
+
+      <div class="lab" id="w9">
+        <div class="lab-head"><span class="lab-tag">Lab 9</span><h4>Aliasing: sampling, folding, and the wagon wheel</h4></div>
+        <div class="lab-body">
+          <div class="cv"><canvas data-cv="time" aria-label="A continuous sine wave, its samples, and the alias sine through them"></canvas></div>
+          <div class="cv-grid" style="grid-template-columns: 1.5fr 1fr">
+            <div class="cv"><canvas data-cv="spec" aria-label="Spectrum with replicas and baseband"></canvas></div>
+            <div class="cv"><canvas data-cv="strobe" aria-label="Strobe view of the sampled phasor"></canvas></div>
+          </div>
+          <div class="controls">
+            <label class="ctl"><span class="name hl-b">tone f&#8320;</span><input type="range" data-k="f0" min="0.5" max="30" step="0.1" value="7" data-unit=" Hz" data-dec="1"><output></output></label>
+            <label class="ctl"><span class="name hl-g">sample f<sub>s</sub></span><input type="range" data-k="fs" min="4" max="30" step="0.5" value="10" data-unit=" Hz" data-dec="1"><output></output></label>
+          </div>
+          <div class="readout" data-out="read"></div>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Keep \(f_s=10\) and sweep \(f_0\) upward. Below 5 Hz the magenta line is hidden behind the blue one: no aliasing. Cross 5 Hz and the magenta curve (the slower sine that fits the same dots) appears and now <em>decreases</em> as the tone rises. The strobe view on the right shows the sampled arrow stepping backward. At \(f_0=f_s=10\) Hz the apparent frequency is exactly zero: the wheel freezes.</p>
+      </div>
+
+      <h3>From the roots of unity to the FFT</h3>
+      <p>Feed \(N\) samples to the discrete Fourier transform and it asks the Section 5 question at \(N\) frequencies:</p>
+      <div class="eq">\[ X[k] \;=\; \sum_{n=0}^{N-1} x[n]\,e^{-j2\pi kn/N}, \qquad k=0,\dots,N-1,\quad \text{bin spacing } f_s/N. \]</div>
+      <p>Computed naively that's \(N^2\) multiplications. The <strong>FFT</strong> cuts it to about \(N\log_2 N\) by exploiting the roots of unity: because \(w^{k+N/2} = -w^k\), a size-\(N\) transform splits into two size-\(N/2\) transforms (even and odd samples) plus cheap combining steps, and it recurses.</p>
+
+      <details class="deeper">
+        <summary>Grad aside: Poisson summation, interpolation, and sampling on purpose</summary>
+        <p>The replicas come from the Poisson summation formula: an impulse train in time has an impulse train in frequency, and multiplication in time is convolution in frequency (Section 8's table). Perfect reconstruction is convolution with the sinc kernel (Whittaker&ndash;Shannon interpolation), which is non-causal and therefore approximated in practice by an anti-alias filter before the sampler and a reconstruction filter after it. There's an RF twist, too. The sampling theorem needs \(f_s>2B\) where \(B\) is the <em>bandwidth</em>, not the highest frequency. A 10 MHz-wide signal centered at 2 GHz can be <strong>undersampled</strong> at a modest rate, if the band lands cleanly between replicas; the aliasing is then a deliberate mixer. This is bandpass (IF) sampling.</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 10 -->
+    <section class="sec" id="s10">
+      <div class="sec-h"><span class="num">10</span><h2>Modulation: moving spectra around</h2></div>
+      <p class="kicker">Radio is phasor engineering.</p>
+
+      <p>The table in Section 8 hid a gem: multiply a signal by \(e^{j2\pi f_c t}\) and its whole spectrum slides up by \(f_c\). That's all a radio transmitter does. To make this precise, write any real passband signal around a carrier \(f_c\) as</p>
+      <div class="eq">\[ s(t) \;=\; \operatorname{Re}\!\big\{\,g(t)\,e^{j2\pi f_c t}\big\} \;=\; I(t)\cos(2\pi f_c t) - Q(t)\sin(2\pi f_c t), \qquad g(t)=I(t)+jQ(t). \]</div>
+      <p>The complex function \(g(t)\), the <strong>complex envelope</strong>, is a slowly moving arrow in the I/Q plane that rides on top of the fast carrier rotation. All the information is in how \(g\) moves. Different modulations are different ways of moving it:</p>
+      <ul>
+        <li><strong>AM:</strong> \(g=1+m\cos(2\pi f_m t)\). The arrow breathes in and out along the real axis; the spectrum is a carrier plus two sidebands at \(f_c\pm f_m\), each of relative height \(m/2\).</li>
+        <li><strong>DSB-SC:</strong> \(g=\cos(2\pi f_m t)\). The arrow swings through the origin, flipping the carrier's sign each time; the carrier line disappears.</li>
+        <li><strong>SSB:</strong> \(g=e^{j2\pi f_m t}\). The arrow just <em>spins</em> at \(f_m\), so there is only one sideband: a single tone at \(f_c+f_m\).</li>
+        <li><strong>FM:</strong> \(g=e^{\,j\beta\sin(2\pi f_m t)}\). The arrow keeps its length and wobbles in angle; its spectrum is the Bessel family \(s(t)=\sum_n J_n(\beta)\cos\!\big(2\pi (f_c+nf_m)t\big)\), where \(\beta=\Delta f/f_m\).</li>
+      </ul>
+
+      <div class="lab" id="w10">
+        <div class="lab-head"><span class="lab-tag">Lab 10</span><h4>Modulation lab: watch the envelope arrow, hear the result</h4></div>
+        <div class="lab-body">
+          <div class="cv"><canvas data-cv="wave" aria-label="The modulated waveform over two message periods"></canvas></div>
+          <div class="cv-grid">
+            <div class="cv"><canvas data-cv="iq" aria-label="The I/Q plane with the path of the complex envelope"></canvas></div>
+            <div class="cv"><canvas data-cv="spec" aria-label="Spectrum of the modulated signal around the carrier"></canvas></div>
+          </div>
+          <div class="controls">
+            <label class="ctl"><span class="name">type</span>
+              <select data-k="type"><option value="am">AM</option><option value="dsb">DSB-SC</option><option value="ssb">SSB (upper)</option><option value="fm">FM</option></select><span></span></label>
+            <label class="ctl"><span class="name">f<sub>c</sub></span><input type="range" data-k="fc" min="200" max="800" step="5" value="440" data-unit=" Hz"><output></output></label>
+            <label class="ctl"><span class="name">f<sub>c</sub>/f<sub>m</sub></span><input type="range" data-k="R" min="8" max="40" step="1" value="20" data-fmt="int"><output></output></label>
+            <label class="ctl"><span class="name" data-out="depthname">depth</span><input type="range" data-k="depth" min="0" max="100" step="1" value="60" data-fmt="none"><output></output></label>
+            <div class="btns"><button class="btn snd" data-act="sound" aria-pressed="false">Sound</button></div>
+          </div>
+          <div class="readout" data-out="read"></div>
+          <p class="hint">The carrier is a real, audible tone at f<sub>c</sub>, and the message is f<sub>c</sub>/f<sub>m</sub> times slower. What you see is exactly what you hear, just drawn over two message periods.</p>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Start on <b>AM</b> with the sound on: it's a tone with a tremolo at \(f_m\). Switch to <b>SSB</b>. The tremolo vanishes and the pitch steps up by \(f_m\); the envelope arrow is now a pure circle. Switch to <b>FM</b> and raise the depth: the arrow stays on the unit circle and sweeps an arc. Watch the spectrum grow sidebands whose heights follow Bessel functions, and the sound turns from vibrato into something metallic.</p>
+      </div>
+
+      <details class="deeper">
+        <summary>Grad aside: Carson's rule and the image problem</summary>
+        <p>FM's spectrum is formally infinite, but the Bessel terms \(J_n(\beta)\) fall off rapidly once \(|n|>\beta+1\), which is Carson's rule: \(B\approx 2(\Delta f+f_m)=2f_m(\beta+1)\). On the receive side, down-converting by multiplying with a <em>real</em> \(\cos(2\pi f_{LO}t)\) produces both \(f_c-f_{LO}\) and \(f_c+f_{LO}\), plus the mirror <em>image</em> from \(f_{LO}-f_c\). A quadrature mixer that multiplies by the complex \(e^{-j2\pi f_{LO}t}\) (two real mixers 90&deg; apart, giving I and Q) shifts the spectrum <em>once</em>, but only as well as the I and Q paths are matched in gain and phase. Any mismatch leaks a scaled mirror copy, so "I/Q imbalance" in a receiver is, mathematically, an error in conjugate symmetry.</p>
+      </details>
+    </section>
+
+    <!-- ===================================================== 11 -->
+    <section class="sec" id="s11">
+      <div class="sec-h"><span class="num">11</span><h2>Why everything speaks this language</h2></div>
+      <p class="kicker">The reason this page exists.</p>
+
+      <p>Why decompose signals into complex exponentials at all? Why not wavelets, or square pulses, or something friendlier? Because of one property of <strong>linear time-invariant (LTI)</strong> systems, the model for filters, amplifiers, cables, rooms, and most of electronics. Feed a spinning arrow into one, with impulse response \(h(t)\):</p>
+      <div class="eq">\[ y(t)=\int_{-\infty}^{\infty} h(\tau)\,e^{j\omega(t-\tau)}d\tau \;=\; \underbrace{\Big(\int_{-\infty}^{\infty} h(\tau)\,e^{-j\omega\tau}d\tau\Big)}_{H(j\omega)}\;e^{j\omega t}. \]</div>
+      <p>The output is the <em>same arrow</em>, spinning at the <em>same rate</em>, merely scaled and rotated by a single complex number, \(H(j\omega)\). We say that complex exponentials are the <strong>eigenfunctions</strong> of every LTI system, and \(H(j\omega)\), the frequency response, is the eigenvalue. A filter can't change a tone's frequency; it can only change its size and its phase.</p>
+      <p>That is the master key. To predict what any system does to any signal: break the signal into phasors (Sections 6&ndash;7), multiply each by \(H\), then add the results back up. Convolution in time has become multiplication in frequency. Take the simple RC low-pass filter, \(RC\,y'+y=x\). Substituting \(x=e^{j\omega t},\ y=He^{j\omega t}\) gives</p>
+      <div class="eq">\[ H(j\omega)=\frac{1}{1+j\omega RC}=\frac{1}{1+j\,\omega/\omega_c},\qquad |H|=\frac{1}{\sqrt{1+(\omega/\omega_c)^2}},\quad \angle H=-\arctan\frac{\omega}{\omega_c}. \]</div>
+
+      <div class="lab" id="w11">
+        <div class="lab-head"><span class="lab-tag">Lab 11</span><h4>A filter can only scale and rotate a phasor</h4></div>
+        <div class="lab-body">
+          <div class="cv"><canvas data-cv="main" aria-label="Input phasor and output phasor of an RC low-pass filter, with scrolling traces"></canvas></div>
+          <div class="cv" style="margin-top:8px"><canvas data-cv="bode" aria-label="Bode magnitude and phase plots with the current frequency marked"></canvas></div>
+          <div class="controls">
+            <label class="ctl"><span class="name">&omega;/&omega;<sub>c</sub></span><input type="range" data-k="r" data-log="1" min="-1" max="0.7" step="0.01" value="0" data-dec="2"><output></output></label>
+            <div class="btns"><button class="btn" data-act="spin" aria-pressed="true">Spinning</button></div>
+          </div>
+          <div class="readout" data-out="read"></div>
+          <p class="hint">Time is shown in slow motion. <span class="hl-b">Blue</span> is the input, <span class="hl-g">green</span> the output.</p>
+        </div>
+      </div>
+
+      <div class="callout try">
+        <strong class="t">Try this</strong>
+        <p>Slide the frequency from low to high. At low frequency the green arrow shadows the blue one nearly exactly (the filter passes it). Near \(\omega=\omega_c\) it has shrunk to 71% and lags by 45&deg;. At high frequency it's tiny and lags by almost 90&deg;. The two arrows <em>always</em> spin together at the same rate, and that is the eigenfunction property you can watch.</p>
+      </div>
+
+      <h3>The map, in one table</h3>
+      <table class="props">
+        <thead><tr><th>Idea</th><th>One-line version</th></tr></thead>
+        <tbody>
+          <tr><td>Euler's formula</td><td>\(e^{j\theta}=\cos\theta+j\sin\theta\): a number with an angle; cosine is its shadow</td></tr>
+          <tr><td>Multiplication</td><td>magnitudes multiply, angles add; so \(e^{j\pi}=-1\)</td></tr>
+          <tr><td>Phasor / negative frequency</td><td>\(\cos\omega t\) is two counter-rotating phasors at \(\pm\omega\)</td></tr>
+          <tr><td>Orthogonality</td><td>\(\sum_m e^{j2\pi km/N}\) is \(N\) or \(0\): frequencies don't interfere</td></tr>
+          <tr><td>Fourier series / transform</td><td>measure each phasor by un-spinning and averaging; \(X(f)=\int x\,e^{-j2\pi ft}dt\)</td></tr>
+          <tr><td>Duality</td><td>narrow in time \(\Leftrightarrow\) wide in frequency; \(\sigma_t\sigma_f\ge 1/4\pi\)</td></tr>
+          <tr><td>Sampling</td><td>sampling replicates the spectrum every \(f_s\); above \(f_s/2\) you alias</td></tr>
+          <tr><td>Modulation</td><td>multiply by \(e^{j2\pi f_ct}\): slide the spectrum; the information is the envelope arrow</td></tr>
+          <tr><td>LTI systems</td><td>\(e^{j\omega t}\to H(j\omega)e^{j\omega t}\): filters scale and rotate phasors</td></tr>
+        </tbody>
+      </table>
+
+      <details class="deeper">
+        <summary>Grad aside: where to go next</summary>
+        <p><strong>Laplace.</strong> Let the arrow also grow or shrink: \(e^{st}\) with \(s=\sigma+j\omega\) is a <em>spiral</em>. Every LTI system also has \(e^{st}\) as an eigenfunction, and \(H(s)\) with its poles and zeros explains stability and transients, the Fourier transform being the slice \(s=j\omega\). <strong>The z-transform</strong> is the discrete-time twin, with \(z=re^{j\omega}\) and the unit circle playing the role of the frequency axis. <strong>OFDM</strong>, the heart of Wi-Fi and LTE/5G, is Section 5 used as a modulator: \(N\) data symbols ride on \(N\) orthogonal subcarriers \(e^{j2\pi kn/N}\), and an inverse FFT builds the transmit signal. <strong>Time-frequency analysis</strong> (STFT, wavelets, Gabor frames) is the engineering response to the uncertainty principle of Section 8. And <strong>spectral estimation</strong> (windowing, periodograms, Welch, MUSIC) is the art of doing Section 7 honestly on finite, noisy data.</p>
+      </details>
+    </section>
+
+    <footer class="end">
+      <p>Built with plain HTML, CSS and JavaScript. Equations are typeset with a bundled copy of <a href="https://katex.org">KaTeX</a> (MIT license, in <code>vendor/katex</code>). The static figures are generated by <code>figures/make_figures.py</code> (Python, NumPy, Matplotlib); the interactive labs are drawn live on <code>&lt;canvas&gt;</code>, and the three audio labs use the browser's Web Audio API. <a href="index.html">&larr; Back to all topics</a></p>
+    </footer>
   </main>
+
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/auto-render.min.js"></script>
+<script>
+/* =====================================================================
+   Euler's identity and the Fourier world: interactive labs.
+
+   Layout of this script
+     1. Helpers: colors, number formatting, canvas drawing primitives
+     2. Lab framework: canvas sizing, control binding, animation loop
+     3. Web Audio helper (only used by Labs 4, 6 and 10)
+     4. The labs themselves (hero, then Lab 1 ... Lab 11)
+     5. Page chrome: progress bar, section chips, math typesetting
+
+   Every lab follows the same pattern:
+       lab('id', { state, ratio, animated, draw, actions, onChange, ... })
+   - state     : default values; controls with data-k="name" in the HTML
+                 keep state.name up to date automatically
+   - draw(L)   : repaint everything from L.s (the state) and L.t (seconds
+                 of animation time); called when something changed or
+                 while animated() is true, and only while the lab is on screen
+   ===================================================================== */
+(function () {
+'use strict';
+
+/* ------------------------------------------------------------------ 1 */
+const PI = Math.PI, TAU = Math.PI * 2;
+const C = {
+  card: '#121a2e', ink: '#e8ecf5', muted: '#9aa6c0', grid: '#26314d', faint: 'rgba(154,166,192,.35)',
+  blue: '#3987e5', orange: '#d95926', green: '#199e70', yellow: '#c98500', violet: '#9085e9', magenta: '#d55181',
+  blueT: '#6aa5f0', orangeT: '#f0865a', greenT: '#3cc593', yellowT: '#e8ac2c', violetT: '#b3abf6', magentaT: '#ec88ac'
+};
+const REDUCE = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* number formatting: real minus sign, never "-0.00" */
+function fx(v, d) {
+  d = d === undefined ? 2 : d;
+  let s = v.toFixed(d);
+  if (parseFloat(s) === 0) s = (0).toFixed(d);
+  return s.replace('-', '−');
+}
+function cplx(re, im, d) {
+  d = d === undefined ? 3 : d;
+  const neg = im < -0.5 * Math.pow(10, -d);
+  return fx(re, d) + ' ' + (neg ? '−' : '+') + ' j' + fx(Math.abs(im), d);
+}
+const wrap180 = a => a - 360 * Math.round(a / 360);          // degrees -> (-180, 180]
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+/* ---- drawing primitives (all take a 2D context first) ---- */
+function seg(c, x0, y0, x1, y1, col, w, dash) {
+  c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1);
+  c.strokeStyle = col; c.lineWidth = w || 1; c.lineCap = 'round';
+  c.setLineDash(dash || []); c.stroke(); c.setLineDash([]);
+}
+function arrow(c, x0, y0, x1, y1, col, w, head) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if (L < 1) return;
+  const ux = dx / L, uy = dy / L, h = Math.min(head || 11, L * 0.75);
+  c.strokeStyle = col; c.fillStyle = col; c.lineWidth = w || 2.5; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1 - ux * h * 0.55, y1 - uy * h * 0.55); c.stroke();
+  c.beginPath(); c.moveTo(x1, y1);
+  c.lineTo(x1 - ux * h + uy * h * 0.42, y1 - uy * h - ux * h * 0.42);
+  c.lineTo(x1 - ux * h - uy * h * 0.42, y1 - uy * h + ux * h * 0.42);
+  c.closePath(); c.fill();
+}
+function dot(c, x, y, r, col, halo) {
+  if (halo) { c.beginPath(); c.arc(x, y, r + 2.5, 0, TAU); c.fillStyle = C.card; c.fill(); }
+  c.beginPath(); c.arc(x, y, r, 0, TAU); c.fillStyle = col; c.fill();
+}
+function ring(c, x, y, r, col, w, dash) {
+  c.beginPath(); c.arc(x, y, r, 0, TAU);
+  c.strokeStyle = col; c.lineWidth = w || 1; c.setLineDash(dash || []); c.stroke(); c.setLineDash([]);
+}
+/* arc by MATH angles in radians (counter-clockwise positive, y axis up) */
+function arcA(c, x, y, r, a0, a1, col, w, dash) {
+  if (Math.abs(a1 - a0) < 1e-4) return;
+  c.beginPath(); c.arc(x, y, r, -a0, -a1, a1 > a0);
+  c.strokeStyle = col; c.lineWidth = w || 2; c.lineCap = 'round';
+  c.setLineDash(dash || []); c.stroke(); c.setLineDash([]);
+}
+function text(c, s, x, y, col, size, align, base, style) {
+  c.fillStyle = col || C.ink;
+  c.font = (style || '') + ' ' + (size || 12) + 'px -apple-system, "Segoe UI", Roboto, sans-serif';
+  c.textAlign = align || 'left'; c.textBaseline = base || 'alphabetic';
+  c.fillText(s, x, y);
+}
+/* "e" with a raised superscript, e.g. e^{j theta} */
+function expText(c, sup, x, y, col, size) {
+  size = size || 15;
+  text(c, 'e', x, y, col, size, 'left', 'alphabetic', 'italic');
+  const w = c.measureText('e').width;
+  text(c, sup, x + w + 1, y - size * 0.45, col, size * 0.68, 'left', 'alphabetic', 'italic');
+}
+function path(c, pts, col, w, dash) {
+  if (pts.length < 4) return;
+  c.beginPath(); c.moveTo(pts[0], pts[1]);
+  for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]);
+  c.strokeStyle = col; c.lineWidth = w || 2; c.lineJoin = 'round'; c.lineCap = 'round';
+  c.setLineDash(dash || []); c.stroke(); c.setLineDash([]);
+}
+function axes2(c, cx, cy, ext, col) {
+  seg(c, cx - ext, cy, cx + ext, cy, col || C.muted, 1);
+  seg(c, cx, cy - ext, cx, cy + ext, col || C.muted, 1);
+}
+
+/* ------------------------------------------------------------------ 2 */
+/* A canvas that sizes itself to its container and to the screen's pixel ratio */
+class Canv {
+  constructor(el, ratio) {
+    this.el = el; this.ratio = ratio; this.ctx = el.getContext('2d'); this.w = 0; this.h = 0; this.d = 0;
+    this.fit();
+  }
+  fit() {
+    const box = this.el.parentElement;
+    const cssW = Math.max(160, Math.floor(box.clientWidth));
+    const r = typeof this.ratio === 'function' ? this.ratio(cssW) : this.ratio;
+    const cssH = Math.max(80, Math.floor(cssW * r));
+    const d = Math.min(window.devicePixelRatio || 1, 2.5);
+    if (this.w === cssW && this.h === cssH && this.d === d) return false;
+    this.w = cssW; this.h = cssH; this.d = d;
+    this.el.width = Math.floor(cssW * d); this.el.height = Math.floor(cssH * d);
+    this.el.style.width = cssW + 'px'; this.el.style.height = cssH + 'px';
+    this.ctx.setTransform(d, 0, 0, d, 0, 0);
+    return true;
+  }
+  clear() { this.ctx.clearRect(0, 0, this.w, this.h); }
+}
+
+const labs = [];
+let io = null;
+
+/* text shown next to a slider */
+function fmt(el, v) {
+  const f = el.dataset.fmt;
+  if (f === 'deg') return fx(v, 0) + '°';
+  if (f === 'degpi') return fx(v, 0) + '° (' + fx(v / 180, 2) + 'π)';
+  if (f === 'int') return String(Math.round(v));
+  if (f === 'up') return 'n ≤ ' + Math.round(v);
+  if (f === 'none') return '';
+  const d = el.dataset.dec !== undefined ? +el.dataset.dec : 0;
+  return fx(v, d) + (el.dataset.unit || '');
+}
+
+function bind(L, el) {
+  const k = el.dataset.k;
+  L.ctl[k] = el;
+  const label = el.closest('label');
+  const out = label ? label.querySelector('output') : null;
+  const read = () => {
+    if (el.type === 'checkbox') return el.checked;
+    if (el.tagName === 'SELECT') return el.value;
+    let v = parseFloat(el.value);
+    if (el.dataset.log) v = Math.pow(10, v);
+    return v;
+  };
+  const upd = () => {
+    L.s[k] = read();
+    if (out) out.textContent = fmt(el, L.s[k]);
+    L.dirty = true;
+    if (L.o.onChange) L.o.onChange(L, k);
+  };
+  el.addEventListener('input', upd);
+  el.addEventListener('change', upd);
+  L.s[k] = read();
+  if (out) out.textContent = fmt(el, L.s[k]);
+}
+/* change a control from code (keeps the slider, the readout and the state in sync) */
+function setVal(L, k, v) {
+  const el = L.ctl[k];
+  if (!el) return;
+  el.value = el.dataset.log ? Math.log10(v) : v;
+  el.dispatchEvent(new Event('input'));
+}
+function setOut(L, k, str) {
+  const el = L.ctl[k]; if (!el) return;
+  const o = el.closest('label').querySelector('output');
+  if (o) o.textContent = str;
+}
+function setPressed(L, act, on) {
+  L.root.querySelectorAll('[data-act="' + act + '"]').forEach(b => b.setAttribute('aria-pressed', on ? 'true' : 'false'));
+}
+
+/* actions every lab gets for free */
+const commonActions = {
+  spin: (L, b) => { L.s.spin = !L.s.spin; b.setAttribute('aria-pressed', L.s.spin ? 'true' : 'false'); },
+  sound: (L, b) => toggleSound(L, b)
+};
+
+function lab(id, o) {
+  const root = document.getElementById(id);
+  if (!root) return null;
+  const L = { id, root, o, s: Object.assign({}, o.state || {}), t: 0, dirty: true, visible: !io, cv: {}, out: {}, ctl: {}, audio: null, failed: false };
+  root.querySelectorAll('canvas[data-cv]').forEach(el => {
+    const name = el.dataset.cv;
+    L.cv[name] = new Canv(el, (o.ratio && o.ratio[name]) || 0.5);
+  });
+  root.querySelectorAll('[data-out]').forEach(el => { L.out[el.dataset.out] = el; });
+  root.querySelectorAll('[data-k]').forEach(el => bind(L, el));
+  const acts = Object.assign({}, commonActions, o.actions || {});
+  root.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const f = acts[btn.dataset.act];
+      if (f) f(L, btn);
+      L.dirty = true;
+    });
+  });
+  if ('spin' in L.s) setPressed(L, 'spin', L.s.spin);
+  root._lab = L;
+  labs.push(L);
+  if (io) io.observe(root);
+  if (o.init) o.init(L);
+  return L;
+}
+
+if ('IntersectionObserver' in window) {
+  io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const L = e.target._lab; if (!L) return;
+      L.visible = e.isIntersecting;
+      if (L.visible) L.dirty = true;
+      else if (L.audio && L.o.stopSound) L.o.stopSound(L);   // don't leave sound running off-screen
+    });
+  }, { rootMargin: '60px' });
+  labs.forEach(L => io.observe(L.root));
+}
+
+let lastT = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  for (const L of labs) {
+    if (!L.visible || L.failed) continue;
+    let moved = false;
+    for (const k in L.cv) if (L.cv[k].fit()) moved = true;
+    const anim = L.o.animated ? L.o.animated(L) : false;
+    if (anim) L.t += dt;
+    if (anim || L.dirty || moved) {
+      L.dirty = false;
+      try { L.o.draw(L, dt); }
+      catch (e) { L.failed = true; console.error('Lab "' + L.id + '" failed:', e); }
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ------------------------------------------------------------------ 3 */
+/* One shared AudioContext; only one lab can make sound at a time. */
+const Snd = {
+  ctx: null, out: null, owner: null,
+  ready() {
+    try {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return false;
+        this.ctx = new AC();
+        this.out = this.ctx.createGain();
+        this.out.gain.value = 0.8;
+        const comp = this.ctx.createDynamicsCompressor();     // safety net against loud peaks
+        this.out.connect(comp); comp.connect(this.ctx.destination);
+      }
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      return true;
+    } catch (e) { return false; }
+  }
+};
+function newAudio(L) {
+  const m = Snd.ctx.createGain();
+  m.gain.value = 0; m.connect(Snd.out);
+  m.gain.setTargetAtTime(1, Snd.ctx.currentTime, 0.03);        // soft fade-in, no click
+  L.audio = { master: m, nodes: [] };
+  return L.audio;
+}
+function fadeStop(L) {
+  const a = L.audio; if (!a) return;
+  L.audio = null;
+  try { a.master.gain.setTargetAtTime(0, Snd.ctx.currentTime, 0.02); } catch (e) { /* ignore */ }
+  setTimeout(() => {
+    a.nodes.forEach(n => { try { n.stop(); } catch (e) { /* ignore */ } try { n.disconnect(); } catch (e) { /* ignore */ } });
+    try { a.master.disconnect(); } catch (e) { /* ignore */ }
+  }, 150);
+  if (Snd.owner === L) Snd.owner = null;
+  setPressed(L, 'sound', false);
+}
+function toggleSound(L, btn) {
+  if (L.audio) { L.o.stopSound(L); return; }
+  if (!Snd.ready()) { btn.textContent = 'Sound not available here'; return; }
+  if (Snd.owner && Snd.owner !== L && Snd.owner.o.stopSound) Snd.owner.o.stopSound(Snd.owner);
+  Snd.owner = L;
+  L.o.startSound(L);
+  setPressed(L, 'sound', true);
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) labs.forEach(L => { if (L.audio && L.o.stopSound) L.o.stopSound(L); });
+});
+
+/* Bessel function of the first kind, J_n(x), by the integral definition */
+function besselJ(n, x) {
+  const N = 160; let s = 0;
+  for (let i = 0; i < N; i++) { const t = (i + 0.5) * PI / N; s += Math.cos(n * t - x * Math.sin(t)); }
+  return s / N;
+}
+
+/* ------------------------------------------------------------------ 4 */
+
+/* ---- Shared by the hero and Lab 6: the epicycle machine ------------
+   A periodic wave as a sum of spinning arrows. Each harmonic n is an
+   arrow of length b_n spinning at n times the fundamental. The arrows
+   are chained tip to tail; the HEIGHT of the last tip is the waveform
+   value (because Im{ sum b_n e^{j n theta} } = sum b_n sin(n theta)).
+*/
+const WAVES = {
+  square: { name: 'Square',   b: n => (n % 2 ? 4 / (PI * n) : 0),
+            f: th => (Math.sin(th) >= 0 ? 1 : -1) },
+  saw:    { name: 'Sawtooth', b: n => 2 * (n % 2 ? 1 : -1) / (PI * n),
+            f: th => { const u = ((th + PI) % TAU + TAU) % TAU; return u / PI - 1; } },
+  tri:    { name: 'Triangle', b: n => (n % 2 ? 8 * ((((n - 1) / 2) % 2) ? -1 : 1) / (PI * PI * n * n) : 0),
+            f: th => (2 / PI) * Math.asin(Math.sin(th)) }
+};
+function coefsFor(wave, H) {
+  const out = [];
+  for (let n = 1; n <= H; n++) { const b = WAVES[wave].b(n); if (b !== 0) out.push({ n, b }); }
+  return out;
+}
+function epiValue(coefs, th) { let v = 0; for (const k of coefs) v += k.b * Math.sin(k.n * th); return v; }
+
+function epiScene(c, x, y, w, h, coefs, th, wave) {
+  const Lw = Math.min(h, w * 0.4);
+  const cx0 = x + Lw / 2, cy0 = y + h / 2;
+  const unit = (Lw / 2) / 2.15;
+  const x0 = x + Lw + 14, x1 = x + w - 4;
+  // scope axes and the +-1 guide lines
+  seg(c, x0, cy0, x1, cy0, C.muted, 1);
+  seg(c, x0, cy0 - unit, x1, cy0 - unit, C.grid, 1, [3, 4]);
+  seg(c, x0, cy0 + unit, x1, cy0 + unit, C.grid, 1, [3, 4]);
+  // the ideal wave, dashed
+  const ideal = [];
+  for (let px = x0; px <= x1; px += 2) {
+    const tau = (px - x0) / (x1 - x0) * 2 * TAU;
+    ideal.push(px, cy0 - WAVES[wave].f(th - tau) * unit);
+  }
+  path(c, ideal, C.faint, 1.2, [4, 4]);
+  // the circles: previous tip is the next circle's center
+  seg(c, cx0 - Lw / 2, cy0, cx0 + Lw / 2, cy0, C.grid, 1);
+  let px = cx0, py = cy0;
+  coefs.forEach((k, i) => {
+    const a = k.n * th, r = Math.abs(k.b) * unit * 1;
+    const nx = px + k.b * unit * Math.cos(a), ny = py - k.b * unit * Math.sin(a);
+    if (r > 1.2) ring(c, px, py, r, 'rgba(154,166,192,.42)', 1);
+    seg(c, px, py, nx, ny, C.green, i === 0 ? 2.4 : 1.5);
+    px = nx; py = ny;
+  });
+  // the sum, drawn as the trace
+  const pts = [];
+  for (let sx = x0; sx <= x1; sx += 2) {
+    const tau = (sx - x0) / (x1 - x0) * 2 * TAU;
+    pts.push(sx, cy0 - epiValue(coefs, th - tau) * unit);
+  }
+  seg(c, px, py, x0, py, 'rgba(60,197,147,.7)', 1.2, [3, 3]);
+  path(c, pts, C.green, 2.4);
+  dot(c, px, py, 4.5, C.greenT, true);
+  dot(c, x0, py, 3.6, C.greenT, true);
+  return { unit, cx0, cy0 };
+}
+
+/* ---- Hero: a square wave from 7 spinning circles ---- */
+lab('hero', {
+  state: {},
+  ratio: { main: w => (w < 560 ? 0.62 : 0.3) },
+  animated: () => !REDUCE,
+  draw(L) {
+    const cv = L.cv.main, c = cv.ctx;
+    cv.clear();
+    const th = L.t * TAU * 0.22;
+    epiScene(c, 8, 4, cv.w - 16, cv.h - 8, coefsFor('square', 13), th, 'square');
+  }
+});
+
+/* ---- Lab 1: the spinning arrow ---- */
+lab('w1', {
+  state: { theta: 50, spin: false },
+  ratio: { main: w => (w < 560 ? 1.34 : 0.5) },
+  animated: L => L.s.spin,
+  actions: {
+    jump: (L, b) => { L.s.spin = false; setPressed(L, 'spin', false); setVal(L, 'theta', +b.dataset.v); }
+  },
+  draw(L, dt) {
+    const cv = L.cv.main, c = cv.ctx, W = cv.w, H = cv.h;
+    cv.clear();
+    if (L.s.spin) { let t = L.s.theta + 36 * dt; if (t > 360) t -= 720; setVal(L, 'theta', t); }
+    const th = L.s.theta * PI / 180;
+    const narrow = W < 560;
+    const P = narrow ? { x: 0, y: 0, w: W, h: W * 0.82 } : { x: 0, y: 0, w: H, h: H };
+    const Q = narrow ? { x: 0, y: W * 0.82, w: W, h: W * 0.52 } : { x: H + 10, y: 0, w: W - H - 10, h: H };
+    const cx0 = P.x + P.w / 2, cy0 = P.y + P.h / 2, R = Math.min(P.w, P.h) * 0.34;
+
+    // --- complex plane ---
+    axes2(c, cx0, cy0, R * 1.3);
+    ring(c, cx0, cy0, R, C.muted, 1.2, [4, 5]);
+    text(c, 'Re', cx0 + R * 1.3 - 2, cy0 - 7, C.muted, 12, 'right');
+    text(c, 'Im', cx0 + 8, cy0 - R * 1.3 + 12, C.muted, 12);
+    text(c, '1', cx0 + R + 3, cy0 + 15, C.muted, 11);
+    text(c, 'j', cx0 + 8, cy0 - R - 4, C.muted, 11, 'left', 'alphabetic', 'italic');
+    const px = cx0 + R * Math.cos(th), py = cy0 - R * Math.sin(th);
+    arcA(c, cx0, cy0, R * 0.26, 0, th, C.yellow, 2.6);
+    seg(c, px, py, px, cy0, C.orange, 3);
+    seg(c, cx0, cy0, px, cy0, C.blue, 4);
+    seg(c, px, py, cx0, py, 'rgba(217,89,38,.45)', 1, [3, 4]);
+    arrow(c, cx0, cy0, px, py, C.green, 3, 13);
+    dot(c, px, py, 6, C.greenT, true);
+    const lx = cx0 + R * 0.34 * Math.cos(th / 2 + 0.0), ly = cy0 - R * 0.34 * Math.sin(th / 2);
+    text(c, 'θ', lx + (Math.cos(th / 2) >= 0 ? 6 : -6), ly + 4, C.yellowT, 14, Math.cos(th / 2) >= 0 ? 'left' : 'right', 'alphabetic', 'italic');
+
+    // --- the shadows, unrolled against angle ---
+    const cy1 = narrow ? Q.y + Q.h / 2 : cy0, R1 = narrow ? Q.h * 0.34 : R;
+    const x0 = Q.x + 10, x1 = Q.x + Q.w - 8;
+    const X = a => x0 + (a + TAU) / (2 * TAU) * (x1 - x0);
+    seg(c, x0, cy1, x1, cy1, C.muted, 1);
+    for (let m = -2; m <= 2; m++) {
+      seg(c, X(m * PI), cy1 - 4, X(m * PI), cy1 + 4, C.muted, 1);
+      text(c, m === 0 ? '0' : (m === 1 ? 'π' : (m === -1 ? '−π' : (m / 1) + 'π').replace('-', '−')), X(m * PI), cy1 + R1 * 1.12 + 12, C.muted, 11, 'center');
+    }
+    seg(c, x0, cy1 - R1, x1, cy1 - R1, C.grid, 1, [3, 4]);
+    seg(c, x0, cy1 + R1, x1, cy1 + R1, C.grid, 1, [3, 4]);
+    const pc = [], ps = [];
+    for (let i = 0; i <= 240; i++) {
+      const a = -TAU + i / 240 * 2 * TAU;
+      pc.push(X(a), cy1 - R1 * Math.cos(a)); ps.push(X(a), cy1 - R1 * Math.sin(a));
+    }
+    path(c, pc, C.blue, 2.2); path(c, ps, C.orange, 2.2);
+    const tx = X(th);
+    seg(c, tx, cy1 - R1 * 1.12, tx, cy1 + R1 * 1.12, C.faint, 1, [2, 3]);
+    if (!narrow) seg(c, px, py, tx, py, 'rgba(217,89,38,.55)', 1.2, [4, 4]);
+    dot(c, tx, cy1 - R1 * Math.cos(th), 5, C.blueT, true);
+    dot(c, tx, cy1 - R1 * Math.sin(th), 5, C.orangeT, true);
+    text(c, 'cos θ', x0 + 2, cy1 - R1 * 1.12 - 6, C.blueT, 13);
+    text(c, 'sin θ', x0 + 62, cy1 - R1 * 1.12 - 6, C.orangeT, 13);
+    text(c, 'angle θ (radians) →', x1, cy1 + R1 * 1.12 + 28, C.muted, 11, 'right');
+
+    // --- readout ---
+    const co = Math.cos(th), si = Math.sin(th), mag = Math.hypot(co + 1, si);
+    L.out.read.innerHTML =
+      '<span class="g">e<sup>jθ</sup></span> = <span class="b">cos θ</span> + j<span class="o">sin θ</span> = ' +
+      '<span class="b">' + fx(co, 3) + '</span> ' + (si < -0.0005 ? '−' : '+') + ' j<span class="o">' + fx(Math.abs(si), 3) + '</span><br>' +
+      '<span class="dim">θ = ' + fx(th, 3) + ' rad &nbsp;|&nbsp; |e<sup>jθ</sup>|² = cos²θ + sin²θ = ' + fx(co * co + si * si, 3) + '</span><br>' +
+      'e<sup>jθ</sup> + 1 = ' + cplx(co + 1, si) + ' &nbsp;→&nbsp; magnitude ' + fx(mag, 3) +
+      (mag < 0.02 ? ' &nbsp;<span class="g">← Euler’s identity: e<sup>jπ</sup> + 1 = 0</span>' : '');
+  }
+});
+
+/* ---- Lab 2: the Taylor series as a chain of arrows ---- */
+lab('w2', {
+  state: { theta: 180, N: 6, grow: false },
+  ratio: { chain: w => (w < 560 ? 0.95 : 0.82), bars: w => (w < 560 ? 0.62 : 0.76) },
+  animated: L => L.s.grow,
+  actions: { grow: (L) => { L.s.grow = true; L.acc = 0; setVal(L, 'N', 0); } },
+  draw(L, dt) {
+    if (L.s.grow) {
+      L.acc = (L.acc || 0) + dt * 3.5;
+      const n = Math.min(30, Math.floor(L.acc));
+      if (n !== L.s.N) setVal(L, 'N', n);
+      if (n >= 30) L.s.grow = false;
+    }
+    const th = L.s.theta * PI / 180, N = Math.round(L.s.N), KMAX = 30;
+    // terms: T_k = (j theta)^k / k!  -> length theta^k/k!, direction j^k
+    const dirs = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+    const len = [], S = [{ x: 0, y: 0 }];
+    let t = 1;
+    for (let k = 0; k <= KMAX; k++) {
+      if (k > 0) t = t * th / k;
+      len.push(t);
+      const d = dirs[k % 4], p = S[S.length - 1];
+      S.push({ x: p.x + d[0] * t, y: p.y + d[1] * t });
+    }
+    // view box that holds the whole chain, the unit circle and the target
+    let minX = -1.2, maxX = 1.2, minY = -1.2, maxY = 1.2;
+    S.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
+
+    // --- left: the chain in the complex plane ---
+    {
+      const cv = L.cv.chain, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const pad = 26, sc = Math.min((W - 2 * pad) / (maxX - minX), (H - 2 * pad) / (maxY - minY));
+      const ox = W / 2 - (minX + maxX) / 2 * sc, oy = H / 2 + (minY + maxY) / 2 * sc;
+      const X = v => ox + v * sc, Y = v => oy - v * sc;
+      seg(c, 0, Y(0), W, Y(0), C.grid, 1); seg(c, X(0), 0, X(0), H, C.grid, 1);
+      ring(c, X(0), Y(0), sc, C.muted, 1.2, [4, 5]);
+      const tx = Math.cos(th), ty = Math.sin(th);
+      for (let k = 1; k <= N; k++) {                       // term k runs from S[k] to S[k+1]
+        const a = S[k], b = S[k + 1], col = (k % 2 === 0) ? C.blue : C.orange;
+        const dx = X(b.x) - X(a.x), dy = Y(b.y) - Y(a.y);
+        if (Math.hypot(dx, dy) > 14) arrow(c, X(a.x), Y(a.y), X(b.x), Y(b.y), col, 2.4, 8);
+        else seg(c, X(a.x), Y(a.y), X(b.x), Y(b.y), col, 2.4);
+      }
+      // the k = 0 term is the "1" arrow from the origin
+      const s0 = S[1]; arrow(c, X(0), Y(0), X(s0.x), Y(s0.y), C.blue, 2.4, 8);
+      for (let k = 0; k <= N; k++) dot(c, X(S[k + 1].x), Y(S[k + 1].y), 2.4, C.ink);
+      const sN = S[N + 1];
+      seg(c, X(sN.x), Y(sN.y), X(tx), Y(ty), C.magenta, 1.6, [4, 4]);
+      dot(c, X(tx), Y(ty), 6, C.greenT, true);
+      dot(c, X(sN.x), Y(sN.y), 5.5, C.yellowT, true);
+      {
+        // target label sits just outside the unit circle, along the radius
+        const ux = tx, uy = ty;                       // math coords, |u| = 1
+        const lx = X(tx) + ux * 16, ly = Y(ty) - uy * 16;
+        const al = ux >= 0 ? 'left' : 'right';
+        text(c, 'target', al === 'left' ? lx : lx, ly - 2, C.greenT, 12, al);
+        if (al === 'left') expText(c, 'jθ', lx, ly + 14, C.greenT, 14);
+        else { const w = c.measureText('e').width; expText(c, 'jθ', lx - w - 14, ly + 14, C.greenT, 14); }
+        // partial-sum label sits on the far side of the partial sum from the target
+        let dx = X(sN.x) - X(tx), dy = Y(sN.y) - Y(ty);
+        let dl = Math.hypot(dx, dy);
+        if (dl < 4) { dx = -ux; dy = uy; dl = 1; }
+        const nx = dx / dl, ny = dy / dl;
+        let px = X(sN.x) + nx * 14; const py = Y(sN.y) + ny * 14 + (ny > 0 ? 8 : -2);
+        const tw = 66;                                // approx. width of the label
+        px = nx >= 0 ? Math.min(px, W - 4 - tw) : Math.max(px, tw + 4);
+        text(c, 'partial sum', px, py, C.yellowT, 12, nx >= 0 ? 'left' : 'right');
+      }
+      text(c, 'k even: → ← (real)   k odd: ↑ ↓ (imaginary)', 8, H - 8, C.muted, 11);
+    }
+    // --- right: how big each term is ---
+    {
+      const cv = L.cv.bars, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const L0 = 8, R0 = W - 8, T0 = 26, B0 = H - 38;
+      const mx = Math.max.apply(null, len);
+      const bw = (R0 - L0) / (KMAX + 1);
+      seg(c, L0, B0, R0, B0, C.muted, 1);
+      for (let k = 0; k <= KMAX; k++) {
+        const h = (B0 - T0) * len[k] / mx;
+        c.globalAlpha = k <= N ? 1 : 0.22;
+        c.fillStyle = k % 2 === 0 ? C.blue : C.orange;
+        c.fillRect(L0 + k * bw + 1, B0 - h, Math.max(1, bw - 2), h);
+        c.globalAlpha = 1;
+        if (k % 5 === 0) text(c, String(k), L0 + k * bw + bw / 2, B0 + 14, C.muted, 11, 'center');
+      }
+      text(c, 'size of each term, θᵏ/k!', L0, 14, C.ink, 12);
+      text(c, 'k (term number)', R0, H - 5, C.muted, 11, 'right');
+      if (W >= 480) text(c, 'largest term: ' + fx(mx, 2), R0, 14, C.muted, 11, 'right');
+    }
+    // --- readout ---
+    const sN = S[N + 1], err = Math.hypot(sN.x - Math.cos(th), sN.y - Math.sin(th));
+    L.out.read.innerHTML =
+      'terms used: k = 0 … ' + N + ' &nbsp;|&nbsp; partial sum = <span class="b">' + fx(sN.x, 4) + '</span> ' + (sN.y < 0 ? '−' : '+') + ' j<span class="o">' + fx(Math.abs(sN.y), 4) + '</span><br>' +
+      'target e<sup>jθ</sup> = <span class="b">' + fx(Math.cos(th), 4) + '</span> ' + (Math.sin(th) < 0 ? '−' : '+') + ' j<span class="o">' + fx(Math.abs(Math.sin(th)), 4) + '</span><br>' +
+      'distance still to go: <span class="m">' + (err < 1e-6 ? '< 0.000001' : (err > 1e4 ? err.toExponential(1) : fx(err, 6))) + '</span>';
+  }
+});
+
+/* ---- Lab 3: multiplication is rotation ---- */
+lab('w3', {
+  state: { r1: 1, t1: 40, r2: 1, t2: 70 },
+  ratio: { main: w => (w < 560 ? 1.0 : 0.62) },
+  actions: {
+    preset: (L, b) => {
+      const p = b.dataset.p;
+      if (p === 'j') { setVal(L, 'r2', 1); setVal(L, 't2', 90); }
+      if (p === 'neg') { setVal(L, 'r2', 1); setVal(L, 't2', 180); }
+      if (p === 'sq') { setVal(L, 'r2', L.s.r1); setVal(L, 't2', L.s.t1); }
+    }
+  },
+  draw(L) {
+    const cv = L.cv.main, c = cv.ctx, W = cv.w, H = cv.h;
+    cv.clear();
+    const { r1, r2 } = L.s, a1 = L.s.t1 * PI / 180, a2 = L.s.t2 * PI / 180, a3 = a1 + a2, r3 = r1 * r2;
+    const narrow = W < 560;
+    const u = Math.min(W, H) / (2 * 2.65);
+    const cx0 = narrow ? W / 2 : W * 0.5, cy0 = H / 2;
+    const P = (r, a) => [cx0 + r * u * Math.cos(a), cy0 - r * u * Math.sin(a)];
+    axes2(c, cx0, cy0, 2.55 * u, C.grid);
+    ring(c, cx0, cy0, u, C.muted, 1.1, [4, 5]);
+    ring(c, cx0, cy0, 2 * u, C.grid, 1, [2, 5]);
+    text(c, '1', cx0 + u + 3, cy0 + 14, C.muted, 11);
+    text(c, '2', cx0 + 2 * u + 3, cy0 + 14, C.muted, 11);
+    // angle arcs
+    arcA(c, cx0, cy0, 0.32 * u, 0, a1, C.yellow, 2.4);
+    arcA(c, cx0, cy0, Math.max(0.5, Math.min(r1, r3) * 0.55) * u, a1, a3, C.violet, 2.4, [5, 4]);
+    // arrows
+    const p1 = P(r1, a1), p2 = P(r2, a2), p3 = P(r3, a3);
+    arrow(c, cx0, cy0, p2[0], p2[1], 'rgba(144,133,233,.55)', 2, 9);
+    arrow(c, cx0, cy0, p1[0], p1[1], C.yellow, 3, 12);
+    arrow(c, cx0, cy0, p3[0], p3[1], C.green, 4, 14);
+    dot(c, p3[0], p3[1], 5.5, C.greenT, true);
+    seg(c, p1[0], p1[1], p3[0], p3[1], 'rgba(60,197,147,.35)', 1, [3, 4]);
+    text(c, 'z₁', p1[0] + 8, p1[1] - 6, C.yellowT, 14, 'left', 'alphabetic', 'italic');
+    text(c, 'z₂', p2[0] + 8, p2[1] - 6, C.violetT, 14, 'left', 'alphabetic', 'italic');
+    text(c, 'z₁z₂', p3[0] + 9, p3[1] + 15, C.greenT, 15, 'left', 'alphabetic', 'italic');
+    // side captions
+    if (!narrow) {
+      text(c, 'yellow arc: θ₁', 14, 24, C.yellowT, 12);
+      text(c, 'violet dashed arc: + θ₂ (z₂ turns z₁)', 14, 42, C.violetT, 12);
+      text(c, 'z₂ is drawn faint', 14, 60, C.muted, 11);
+    }
+    // readout (the product is computed by plain complex multiplication, independent of the picture)
+    const z1 = [r1 * Math.cos(a1), r1 * Math.sin(a1)], z2 = [r2 * Math.cos(a2), r2 * Math.sin(a2)];
+    const pr = [z1[0] * z2[0] - z1[1] * z2[1], z1[0] * z2[1] + z1[1] * z2[0]];
+    L.out.read.innerHTML =
+      '<span class="y">z₁</span> = ' + fx(r1, 2) + ' ∠ ' + fx(L.s.t1, 0) + '° &nbsp;&nbsp; <span class="v">z₂</span> = ' + fx(r2, 2) + ' ∠ ' + fx(L.s.t2, 0) + '°<br>' +
+      '<span class="g">z₁z₂</span> = (' + fx(r1, 2) + ' × ' + fx(r2, 2) + ') ∠ (' + fx(L.s.t1, 0) + '° + ' + fx(L.s.t2, 0) + '°) = ' + fx(r3, 3) + ' ∠ ' + fx(wrap180(L.s.t1 + L.s.t2), 0) + '°<br>' +
+      '<span class="dim">same number by ordinary algebra: ' + cplx(pr[0], pr[1]) + '</span>';
+  }
+});
+
+/* ---- Lab 4: the phasor in motion, with sound ---------------------------
+   Real time is slowed down x200 on screen so the rotation is visible. The
+   sound plays the true frequency. */
+const SLOW = 200, WINDOW_REAL = 0.02;     // scope shows 20 ms of real time
+lab('w4', {
+  state: { f: 220, A: 0.9, phi: 0, pair: false, spin: !REDUCE },
+  ratio: { main: w => (w < 620 ? 1.24 : 0.5) },
+  animated: L => L.s.spin,
+  startSound(L) {
+    const a = newAudio(L), o = Snd.ctx.createOscillator(), g = Snd.ctx.createGain();
+    o.type = 'sine'; o.frequency.value = L.s.f; g.gain.value = 0.2 * L.s.A;
+    o.connect(g); g.connect(a.master); o.start();
+    a.nodes.push(o); a.osc = o; a.g = g;
+  },
+  stopSound: fadeStop,
+  onChange(L, k) {
+    if (!L.audio) return;
+    const t = Snd.ctx.currentTime;
+    if (k === 'f') L.audio.osc.frequency.setTargetAtTime(L.s.f, t, 0.02);
+    if (k === 'A') L.audio.g.gain.setTargetAtTime(0.2 * L.s.A, t, 0.02);
+  },
+  draw(L) {
+    const cv = L.cv.main, c = cv.ctx, W = cv.w, H = cv.h;
+    cv.clear();
+    const narrow = W < 620;
+    const P = narrow ? { x: 0, y: 0, w: W, h: W * 0.62 } : { x: 0, y: 0, w: H, h: H };
+    const S = narrow ? { x: 0, y: W * 0.62, w: W, h: W * 0.62 } : { x: H + 12, y: 0, w: W - H - 12, h: H };
+    const f = L.s.f, A = L.s.A, phi = L.s.phi * PI / 180, pair = L.s.pair;
+    const phaseAt = tr => TAU * f * tr + phi;
+    const tr = L.t / SLOW, th = phaseAt(tr);
+
+    // --- complex plane ---
+    const cx0 = P.x + P.w / 2, cy0 = P.y + P.h / 2, R = Math.min(P.w, P.h) * 0.36;
+    axes2(c, cx0, cy0, R * 1.3);
+    ring(c, cx0, cy0, R, C.muted, 1.1, [4, 5]);
+    text(c, 'Re', cx0 + R * 1.3 - 2, cy0 - 7, C.muted, 12, 'right');
+    text(c, 'Im', cx0 + 8, cy0 - R * 1.3 + 12, C.muted, 12);
+    const cs = Math.cos(th), sn = Math.sin(th);
+    if (!pair) {
+      const px = cx0 + R * A * cs, py = cy0 - R * A * sn;
+      seg(c, cx0, cy0, px, cy0, C.blue, 4);
+      seg(c, px, cy0, px, py, C.orange, 3);
+      seg(c, px, py, cx0, py, 'rgba(217,89,38,.4)', 1, [3, 4]);
+      arrow(c, cx0, cy0, px, py, C.green, 3, 13);
+      dot(c, px, py, 5.5, C.greenT, true);
+    } else {
+      const ax = cx0 + R * A / 2 * cs, ay = cy0 - R * A / 2 * sn;     // tip of the +f phasor
+      const qx = cx0 + R * A * cs;                                    // sum lands on the real axis
+      seg(c, cx0, cy0, qx, cy0, C.blue, 4.5);
+      arrow(c, cx0, cy0, ax, ay, C.green, 3, 11);
+      arrow(c, ax, ay, qx, cy0, C.violet, 3, 11);
+      dot(c, qx, cy0, 5.5, C.blueT, true);
+      text(c, '½', cx0 + R * A / 4 * cs - 14, cy0 - R * A / 4 * sn - 8, C.greenT, 13);
+      text(c, '+f', ax + 8, ay - 6, C.greenT, 12);
+      text(c, '−f', (ax + qx) / 2 + 8, (ay + cy0) / 2 + 14, C.violetT, 12);
+    }
+
+    // --- two scopes: Re and Im, newest value at the left edge, history flowing right ---
+    const hh = (S.h - 24) / 2;
+    const scopes = [
+      { y: S.y + 4, kind: 're', col: C.blue, colT: C.blueT, label: 'Re  =  A cos(2πft + φ)' },
+      { y: S.y + 4 + hh + 16, kind: 'im', col: C.orange, colT: C.orangeT, label: pair ? 'Im  =  0   (the two imaginary parts cancel)' : 'Im  =  A sin(2πft + φ)' }
+    ];
+    const x0 = S.x + 10, x1 = S.x + S.w - 4, n = Math.max(40, Math.floor((x1 - x0) / 2));
+    scopes.forEach(sc => {
+      const cy = sc.y + hh / 2, amp = hh * 0.36;
+      c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(x0 - 6, sc.y, x1 - x0 + 10, hh);
+      seg(c, x0 - 6, cy, x1 + 4, cy, C.muted, 1);
+      seg(c, x0 - 6, cy - amp, x1 + 4, cy - amp, C.grid, 1, [3, 4]);
+      seg(c, x0 - 6, cy + amp, x1 + 4, cy + amp, C.grid, 1, [3, 4]);
+      const val = tau => {
+        const p = phaseAt(tr - tau);
+        if (sc.kind === 're') return A * Math.cos(p);
+        return pair ? 0 : A * Math.sin(p);
+      };
+      if (sc.kind === 'im' && pair) {
+        const ga = [], va = [];
+        for (let i = 0; i <= n; i++) {
+          const tau = i / n * WINDOW_REAL, p = phaseAt(tr - tau);
+          ga.push(x0 + i * (x1 - x0) / n, cy - amp * A / 2 * Math.sin(p));
+          va.push(x0 + i * (x1 - x0) / n, cy + amp * A / 2 * Math.sin(p));
+        }
+        path(c, ga, 'rgba(60,197,147,.6)', 1.4); path(c, va, 'rgba(144,133,233,.7)', 1.4);
+      }
+      const pts = [];
+      for (let i = 0; i <= n; i++) pts.push(x0 + i * (x1 - x0) / n, cy - amp * val(i / n * WINDOW_REAL));
+      path(c, pts, sc.col, 2.4);
+      dot(c, x0, cy - amp * val(0), 4.8, sc.colT, true);
+      text(c, sc.label, x0 - 2, sc.y + 14, sc.colT, 12);
+    });
+    text(c, '← now          20 ms of real time (÷200 slow motion on screen) →', x1, S.y + S.h - 2, C.muted, 11, 'right');
+
+    // --- readout ---
+    const deg = ((th * 180 / PI) % 360 + 360) % 360;
+    const x = A * Math.cos(th), y = A * Math.sin(th);
+    L.out.read.innerHTML =
+      'x(t) = A cos(2π f t + φ) = Re{ A e<sup>jφ</sup> · e<sup>j2π f t</sup> } &nbsp; with A = ' + fx(A, 2) + ', f = ' + fx(f, 0) + ' Hz, φ = ' + fx(L.s.phi, 0) + '°<br>' +
+      'one turn takes T = 1/f = ' + fx(1000 / f, 2) + ' ms &nbsp;|&nbsp; now: angle = ' + fx(deg, 0) + '°, <span class="b">Re = ' + fx(x, 3) + '</span>, <span class="o">Im = ' + fx(y, 3) + '</span><br>' +
+      (pair ? '<span class="g">cos θ = ½e<sup>+jθ</sup> + ½e<sup>−jθ</sup></span> &nbsp;→&nbsp; <span class="dim">imaginary parts cancel, real parts add</span>'
+            : '<span class="dim">tick the box above to see the same cosine as two counter-rotating phasors</span>');
+  }
+});
+
+/* ---- Lab 5: roots of unity ---- */
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { const t = b; b = a % b; a = t; } return a; }
+lab('w5', {
+  state: { N: 8, k: 1, animate: !REDUCE },
+  ratio: { circle: 0.95, chain: 0.95 },
+  animated: L => L.s.animate,
+  draw(L) {
+    const N = Math.round(L.s.N), k = Math.round(L.s.k);
+    const prog = L.s.animate ? ((L.t * 2.2) % (N + 3)) : N + 3;
+    const shown = Math.min(N, Math.floor(prog));
+    const frac = (L.s.animate && prog < N) ? prog - Math.floor(prog) : 0;
+    const ang = m => TAU * k * m / N;
+
+    // --- left: the points visited on the circle ---
+    {
+      const cv = L.cv.circle, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const cx0 = W / 2, cy0 = H / 2, R = Math.min(W, H) * 0.38;
+      axes2(c, cx0, cy0, R * 1.25, C.grid);
+      ring(c, cx0, cy0, R, C.muted, 1.1, [4, 5]);
+      for (let m = 0; m < N; m++) {
+        const a = TAU * m / N;
+        dot(c, cx0 + R * Math.cos(a), cy0 - R * Math.sin(a), 3, 'rgba(154,166,192,.55)');
+      }
+      const pts = [];
+      for (let m = 0; m <= shown; m++) pts.push(cx0 + R * Math.cos(ang(m)), cy0 - R * Math.sin(ang(m)));
+      path(c, pts, 'rgba(232,172,44,.75)', 1.8);
+      for (let m = 0; m <= shown && m < N; m++) {
+        const x = cx0 + R * Math.cos(ang(m)), y = cy0 - R * Math.sin(ang(m));
+        dot(c, x, y, 5, C.greenT, true);
+        if (N <= 12) text(c, String(m), x + (Math.cos(ang(m)) >= 0 ? 8 : -8), y + (Math.sin(ang(m)) >= 0 ? -6 : 14), C.ink, 11, Math.cos(ang(m)) >= 0 ? 'left' : 'right');
+      }
+      text(c, 'point m sits at angle m × step', 8, H - 8, C.muted, 11);
+      text(c, 'each step turns ' + fx(360 * k / N, 1) + '°', 8, 18, C.yellowT, 12);
+    }
+    // --- right: the same arrows laid tip to tail ---
+    {
+      const cv = L.cv.chain, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const S = [{ x: 0, y: 0 }];
+      for (let m = 0; m < N; m++) S.push({ x: S[m].x + Math.cos(ang(m)), y: S[m].y + Math.sin(ang(m)) });
+      let minX = 0, maxX = 0, minY = 0, maxY = 0;
+      S.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
+      const spanX = Math.max(1.6, maxX - minX), spanY = Math.max(1.6, maxY - minY);
+      const sc = Math.min((W - 60) / spanX, (H - 60) / spanY);
+      const ox = W / 2 - (minX + maxX) / 2 * sc, oy = H / 2 + (minY + maxY) / 2 * sc;
+      const X = v => ox + v * sc, Y = v => oy - v * sc;
+      ring(c, X(0), Y(0), 7, C.muted, 1.2);
+      for (let m = 0; m < shown; m++) arrow(c, X(S[m].x), Y(S[m].y), X(S[m + 1].x), Y(S[m + 1].y), C.green, 2.6, Math.min(10, sc * 0.5));
+      if (frac > 0 && shown < N) {
+        const a = S[shown], b = S[shown + 1];
+        seg(c, X(a.x), Y(a.y), X(a.x + (b.x - a.x) * frac), Y(a.y + (b.y - a.y) * frac), C.green, 2.6);
+      }
+      const e = S[shown];
+      dot(c, X(e.x), Y(e.y), 5, C.yellowT, true);
+      text(c, 'start', X(0) + 11, Y(0) - 9, C.muted, 11);
+      text(c, 'the ' + N + ' arrows, tip to tail', 8, 18, C.greenT, 12);
+    }
+    // --- readout ---
+    let re = 0, im = 0;
+    for (let m = 0; m < N; m++) { re += Math.cos(ang(m)); im += Math.sin(ang(m)); }
+    const g = gcd(k, N), mult = (k % N === 0);
+    L.out.read.innerHTML =
+      'Σ<sub>m=0..' + (N - 1) + '</sub> e<sup>j2π·' + k + '·m/' + N + '</sup> = <span class="g">' + cplx(re, im) + '</span><br>' +
+      (mult ? '<span class="y">k is a multiple of N</span> → every arrow is 1 → they all line up → sum = N = ' + N
+            : '<span class="y">k is not a multiple of N</span> → the arrows close into a loop → sum = 0 (these two exponentials are <b>orthogonal</b>)' +
+              (g > 1 ? '<br><span class="dim">gcd(k, N) = ' + g + ': the walk only visits ' + (N / g) + ' distinct points and goes around ' + g + ' times</span>' : ''));
+  }
+});
+
+/* ---- Lab 6: epicycles ---- */
+function wave6(L) {
+  const H = Math.round(L.s.H), real = new Float32Array(H + 1), imag = new Float32Array(H + 1);
+  for (let n = 1; n <= H; n++) imag[n] = WAVES[L.s.wave].b(n);
+  return Snd.ctx.createPeriodicWave(real, imag);
+}
+lab('w6', {
+  state: { wave: 'square', H: 7, speed: 0.2, f0: 220, spin: !REDUCE, ph: 0 },
+  ratio: { main: w => (w < 620 ? 0.8 : 0.42), spec: 0.2 },
+  animated: L => L.s.spin,
+  startSound(L) {
+    const a = newAudio(L), o = Snd.ctx.createOscillator(), g = Snd.ctx.createGain();
+    o.setPeriodicWave(wave6(L)); o.frequency.value = L.s.f0; g.gain.value = 0.17;
+    o.connect(g); g.connect(a.master); o.start();
+    a.nodes.push(o); a.osc = o;
+  },
+  stopSound: fadeStop,
+  onChange(L, k) {
+    if (!L.audio) return;
+    if (k === 'f0') L.audio.osc.frequency.setTargetAtTime(L.s.f0, Snd.ctx.currentTime, 0.02);
+    if (k === 'H' || k === 'wave') L.audio.osc.setPeriodicWave(wave6(L));
+  },
+  draw(L, dt) {
+    if (L.s.spin) L.s.ph += TAU * L.s.speed * dt;
+    const H = Math.round(L.s.H), wave = L.s.wave, coefs = coefsFor(wave, H);
+    {
+      const cv = L.cv.main, c = cv.ctx;
+      cv.clear();
+      epiScene(c, 8, 4, cv.w - 16, cv.h - 8, coefs, L.s.ph, wave);
+      text(c, 'each circle = one harmonic', 10, 16, C.muted, 11);
+      text(c, 'tip height = waveform (green) vs. ideal (dashed)', cv.w - 10, cv.h - 8, C.muted, 11, 'right');
+    }
+    {
+      const cv = L.cv.spec, c = cv.ctx, W = cv.w, Hh = cv.h;
+      cv.clear();
+      const L0 = 8, R0 = W - 8, T0 = 14, B0 = Hh - 18, bw = (R0 - L0) / 40;
+      seg(c, L0, B0, R0, B0, C.muted, 1);
+      for (let n = 1; n <= 39; n++) {
+        const b = Math.abs(WAVES[wave].b(n)), h = (B0 - T0) * b / 1.3;
+        c.fillStyle = n <= H ? C.yellow : 'rgba(154,166,192,.28)';
+        c.fillRect(L0 + n * bw + 1, B0 - h, Math.max(1.5, bw - 2), h);
+        if (n === 1 || n % 5 === 0) text(c, String(n), L0 + n * bw + bw / 2, B0 + 13, C.muted, 10, 'center');
+      }
+      text(c, 'harmonic amplitudes |bₙ| (yellow = included)', L0 + 4, 11, C.muted, 11);
+      text(c, 'n', R0, B0 + 13, C.muted, 10, 'right');
+    }
+    let se = 0; const M = 360;
+    for (let i = 0; i < M; i++) { const th = (i + 0.5) / M * TAU, d = epiValue(coefs, th) - WAVES[wave].f(th); se += d * d; }
+    const f0 = L.s.f0, ns = coefs.slice(0, 4);
+    L.out.read.innerHTML =
+      WAVES[wave].name + ' wave, harmonics n ≤ ' + H + ' → <span class="g">' + coefs.length + ' spinning arrow' + (coefs.length === 1 ? '' : 's') + '</span> &nbsp;|&nbsp; rms error vs ideal: <span class="m">' + fx(Math.sqrt(se / M), 3) + '</span><br>' +
+      'sizes: ' + ns.map(k => 'b<sub>' + k.n + '</sub> = ' + fx(Math.abs(k.b), 3)).join(', ') + (coefs.length > 4 ? ', …' : '') + '<br>' +
+      '<span class="dim">sound: fundamental ' + f0 + ' Hz, overtones at ' + ns.slice(1).map(k => k.n * f0).join(', ') + (coefs.length > 4 ? ', …' : '') + ' Hz</span>';
+  }
+});
+
+/* ---- Lab 7: the winding machine ----------------------------------------
+   z(t) = x(t) e^{-j 2 pi f_w t}: the signal wrapped around the origin at
+   winding frequency f_w. The balance point (mean of z) is X(f_w) / T. */
+const T7 = 8, DT7 = 0.01, NS7 = Math.round(T7 / DT7);
+lab('w7', {
+  state: { f1: 3, f2: 5, A2: 0.8, fw: 3, scan: false },
+  ratio: { wind: 0.95, spec: w => (w < 640 ? 0.7 : 0.95) },
+  animated: L => L.s.scan,
+  actions: {
+    scan: (L, b) => {
+      L.s.scan = !L.s.scan; b.setAttribute('aria-pressed', L.s.scan ? 'true' : 'false');
+      if (L.s.scan) setVal(L, 'fw', 0);
+    }
+  },
+  draw(L, dt) {
+    if (L.s.scan) {
+      let fw = L.s.fw + 0.8 * dt;
+      if (fw >= 10) { fw = 10; L.s.scan = false; setPressed(L, 'scan', false); }
+      setVal(L, 'fw', fw);
+    }
+    const { f1, f2, A2, fw } = L.s;
+    // cache the signal and its spectrum while f1, f2, A2 stay the same
+    const key = f1 + '|' + f2 + '|' + A2;
+    if (L.key !== key) {
+      L.key = key;
+      L.g = new Float64Array(NS7);
+      for (let i = 0; i < NS7; i++) { const t = i * DT7; L.g[i] = Math.cos(TAU * f1 * t) + A2 * Math.cos(TAU * f2 * t); }
+      const NF = 501; L.spec = new Float64Array(NF);
+      for (let fi = 0; fi < NF; fi++) {
+        const f = fi * 0.02, dre = Math.cos(-TAU * f * DT7), dim = Math.sin(-TAU * f * DT7);
+        let re = 1, im = 0, sr = 0, si = 0;
+        for (let i = 0; i < NS7; i++) {
+          sr += L.g[i] * re; si += L.g[i] * im;
+          const nr = re * dre - im * dim; im = re * dim + im * dre; re = nr;
+        }
+        L.spec[fi] = Math.hypot(sr, si) / NS7;
+      }
+    }
+    // --- left: the wound-up signal ---
+    let comX = 0, comY = 0;
+    {
+      const cv = L.cv.wind, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const cx0 = W / 2, cy0 = H / 2, u = Math.min(W, H) * 0.43 / (1 + A2 + 0.05);
+      axes2(c, cx0, cy0, Math.min(W, H) * 0.47, C.grid);
+      ring(c, cx0, cy0, u, C.grid, 1, [3, 5]);
+      const pts = [];
+      for (let i = 0; i < NS7; i++) {
+        const t = i * DT7, a = -TAU * fw * t, g = L.g[i];
+        const zr = g * Math.cos(a), zi = g * Math.sin(a);
+        comX += zr; comY += zi;
+        pts.push(cx0 + zr * u, cy0 - zi * u);
+      }
+      comX /= NS7; comY /= NS7;
+      path(c, pts, 'rgba(60,197,147,.85)', 1.1);
+      arrow(c, cx0, cy0, cx0 + comX * u, cy0 - comY * u, C.yellow, 2.4, 9);
+      dot(c, cx0 + comX * u, cy0 - comY * u, 5.5, C.yellowT, true);
+      text(c, 'signal wound at ' + fx(fw, 2) + ' Hz', 8, 16, C.greenT, 12);
+      text(c, 'balance point', cx0 + comX * u + 9, cy0 - comY * u - 9, C.yellowT, 12);
+    }
+    // --- right: balance-point distance vs. winding frequency ---
+    const mag = Math.hypot(comX, comY);
+    {
+      const cv = L.cv.spec, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      let mx = 0; for (let i = 0; i < L.spec.length; i++) mx = Math.max(mx, L.spec[i]);
+      const ymax = Math.max(0.6, mx * 1.18);
+      const L0 = 34, R0 = W - 10, T0 = 38, B0 = H - 38;
+      const X = f => L0 + f / 10 * (R0 - L0), Y = v => B0 - v / ymax * (B0 - T0);
+      seg(c, L0, B0, R0, B0, C.muted, 1); seg(c, L0, T0, L0, B0, C.muted, 1);
+      for (let f = 0; f <= 10; f += 2) { seg(c, X(f), B0, X(f), B0 + 4, C.muted, 1); text(c, String(f), X(f), B0 + 17, C.muted, 11, 'center'); }
+      text(c, 'winding frequency (Hz)', R0, H - 5, C.muted, 11, 'right');
+      for (let v = 0; v <= ymax + 1e-9; v += 0.25) { seg(c, L0, Y(v), R0, Y(v), C.grid, 1, [2, 4]); text(c, fx(v, 2), L0 - 4, Y(v) + 4, C.muted, 10, 'right'); }
+      seg(c, X(f1), T0, X(f1), B0, 'rgba(57,135,229,.55)', 1.2, [4, 4]);
+      seg(c, X(f2), T0, X(f2), B0, 'rgba(144,133,233,.55)', 1.2, [4, 4]);
+      text(c, 'f₁', X(f1), T0 - 6, C.blueT, 12, 'center');
+      text(c, 'f₂', X(f2), T0 - 6, C.violetT, 12, 'center');
+      const pts = [];
+      for (let i = 0; i < L.spec.length; i++) pts.push(X(i * 0.02), Y(L.spec[i]));
+      path(c, pts, C.green, 2.2);
+      seg(c, X(fw), T0, X(fw), B0, C.faint, 1);
+      dot(c, X(fw), Y(mag), 5, C.yellowT, true);
+      text(c, 'distance of balance point from origin', L0 + 4, 13, C.ink, 12);
+    }
+    // --- readout ---
+    let note = '';
+    if (Math.abs(fw - f1) < 0.08) note = ' <span class="b">← locked onto f₁: that cosine stopped spinning, its contribution is a constant 1/2</span>';
+    else if (Math.abs(fw - f2) < 0.08 && A2 > 0) note = ' <span class="v">← locked onto f₂: constant contribution A₂/2 = ' + fx(A2 / 2, 2) + '</span>';
+    L.out.read.innerHTML =
+      'winding at f<sub>w</sub> = <span class="g">' + fx(fw, 2) + ' Hz</span> &nbsp;→&nbsp; balance point = ' + cplx(comX, comY) + ' &nbsp;|&nbsp; distance = <span class="y">' + fx(mag, 3) + '</span>' + note + '<br>' +
+      '<span class="dim">expected peaks: ' + fx(0.5, 2) + ' at f₁ = ' + fx(f1, 1) + ' Hz, ' + fx(A2 / 2, 2) + ' at f₂ = ' + fx(f2, 1) + ' Hz (a real cosine of amplitude A shows up as A/2 at +f and A/2 at −f)</span>';
+  }
+});
+
+/* ---- Lab 8: time width vs. bandwidth ---------------------------------- */
+function sinc(x) { return Math.abs(x) < 1e-9 ? 1 : Math.sin(PI * x) / (PI * x); }
+const SIG = 1 / (2 * Math.sqrt(2 * Math.log(2)));              // sigma = tau * SIG gives amplitude FWHM = tau
+function g8(shape, t, tau, f0) {
+  const sg = tau * SIG;
+  switch (shape) {
+    case 'rect': return Math.abs(t) <= tau / 2 ? 1 : 0;
+    case 'tri': return Math.max(0, 1 - 2 * Math.abs(t) / tau);
+    case 'gauss': return Math.exp(-t * t / (2 * sg * sg));
+    default: return Math.exp(-t * t / (2 * sg * sg)) * Math.cos(TAU * f0 * t);
+  }
+}
+function env8(shape, t, tau) { return shape === 'burst' ? g8('gauss', t, tau) : g8(shape, t, tau); }
+function G8(shape, f, tau, f0) {
+  const sg = tau * SIG, k = 2 * PI * PI * sg * sg;
+  switch (shape) {
+    case 'rect': return Math.abs(tau * sinc(f * tau));
+    case 'tri': return (tau / 2) * Math.pow(sinc(f * tau / 2), 2);
+    case 'gauss': return sg * Math.sqrt(TAU) * Math.exp(-k * f * f);
+    default: return 0.5 * sg * Math.sqrt(TAU) * (Math.exp(-k * (f - f0) * (f - f0)) + Math.exp(-k * (f + f0) * (f + f0)));
+  }
+}
+/* width of the half-power region around index i0 of array a (a = samples of an amplitude) */
+function halfPowerWidth(a, i0, step) {
+  const pk = a[i0] * a[i0]; let lo = i0, hi = i0, edge = false;
+  while (lo > 0 && a[lo] * a[lo] >= 0.5 * pk) lo--;
+  while (hi < a.length - 1 && a[hi] * a[hi] >= 0.5 * pk) hi++;
+  if (lo === 0 || hi === a.length - 1) edge = true;
+  return { w: (hi - lo) * step, edge };
+}
+lab('w8', {
+  state: { shape: 'gauss', tau: 0.5, f0: 2.5, db: false },
+  ratio: { time: w => (w < 640 ? 0.6 : 0.78), freq: w => (w < 640 ? 0.6 : 0.78) },
+  init(L) { L.root.classList.toggle('is-burst', L.s.shape === 'burst'); },
+  onChange(L, k) { if (k === 'shape') L.root.classList.toggle('is-burst', L.s.shape === 'burst'); },
+  draw(L) {
+    const { shape, tau, f0, db } = L.s;
+    // --- time domain ---
+    {
+      const cv = L.cv.time, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const L0 = 30, R0 = W - 10, T0 = 26, B0 = H - 38, cy = (T0 + B0) / 2, amp = (B0 - T0) / 2 * 0.86;
+      const X = t => L0 + (t + 3) / 6 * (R0 - L0);
+      seg(c, L0, cy, R0, cy, C.muted, 1); seg(c, L0, T0, L0, B0, C.muted, 1);
+      for (let t = -3; t <= 3; t++) { seg(c, X(t), cy - 3, X(t), cy + 3, C.muted, 1); text(c, String(t).replace('-', '−'), X(t), B0 + 14, C.muted, 11, 'center'); }
+      text(c, 'time (s)', R0, H - 5, C.muted, 11, 'right');
+      text(c, 'pulse in time', L0 + 4, 14, C.ink, 12);
+      if (shape === 'burst') {
+        const e1 = [], e2 = [];
+        for (let i = 0; i <= 400; i++) { const t = -3 + i * 6 / 400, e = env8(shape, t, tau); e1.push(X(t), cy - amp * e); e2.push(X(t), cy + amp * e); }
+        path(c, e1, C.faint, 1.2, [4, 4]); path(c, e2, C.faint, 1.2, [4, 4]);
+      }
+      const pts = [], N = 1400;
+      for (let i = 0; i <= N; i++) { const t = -3 + i * 6 / N; pts.push(X(t), cy - amp * g8(shape, t, tau, f0)); }
+      path(c, pts, C.blue, 2.4);
+    }
+    // --- frequency domain ---
+    {
+      const cv = L.cv.freq, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const L0 = 36, R0 = W - 10, T0 = 26, B0 = H - 38;
+      const X = f => L0 + (f + 8) / 16 * (R0 - L0);
+      const NF = 800, vals = [], fgrid = [];
+      let mx = 0;
+      for (let i = 0; i <= NF; i++) { const f = -8 + i * 16 / NF; fgrid.push(f); const v = G8(shape, f, tau, f0); vals.push(v); mx = Math.max(mx, v); }
+      const Y = v => db ? B0 - (clamp(20 * Math.log10(Math.max(v / mx, 1e-4)), -60, 0) + 60) / 60 * (B0 - T0)
+                         : B0 - v / mx * (B0 - T0) * 0.96;
+      seg(c, L0, B0, R0, B0, C.muted, 1); seg(c, L0, T0, L0, B0, C.muted, 1);
+      for (let f = -8; f <= 8; f += 4) { seg(c, X(f), B0, X(f), B0 + 4, C.muted, 1); text(c, String(f).replace('-', '−'), X(f), B0 + 17, C.muted, 11, 'center'); }
+      text(c, 'frequency (Hz)', R0, H - 5, C.muted, 11, 'right');
+      text(c, db ? 'magnitude spectrum, dB (0 dB = peak)' : 'magnitude spectrum (peak = 1)', L0 + 4, 14, C.ink, 12);
+      if (db) for (let d = 0; d >= -60; d -= 20) { const y = B0 - (d + 60) / 60 * (B0 - T0); seg(c, L0, y, R0, y, C.grid, 1, [2, 4]); text(c, String(d).replace('-', '−'), L0 - 4, y + 4, C.muted, 10, 'right'); }
+      const pts = [];
+      for (let i = 0; i <= NF; i++) pts.push(X(fgrid[i]), Y(vals[i]));
+      path(c, pts, C.green, 2.4);
+    }
+    // --- measured widths (half-power, i.e. where |.|^2 falls to 1/2) ---
+    const NT = 6001, ta = new Float64Array(NT);
+    for (let i = 0; i < NT; i++) ta[i] = env8(shape, -3 + i * 6 / (NT - 1), tau);
+    const wt = halfPowerWidth(ta, (NT - 1) / 2, 6 / (NT - 1));
+    const NFm = 3201, fa = new Float64Array(NFm);
+    let i0 = 0, best = -1;
+    for (let i = 0; i < NFm; i++) {
+      const f = -8 + i * 16 / (NFm - 1); fa[i] = G8(shape, f, tau, f0);
+      if ((shape !== 'burst' || f >= 0) && fa[i] > best) { best = fa[i]; i0 = i; }
+    }
+    const wf = halfPowerWidth(fa, i0, 16 / (NFm - 1));
+    const prod = wt.w * wf.w;
+    const names = { rect: 'Rectangle', tri: 'Triangle', gauss: 'Gaussian', burst: 'Tone burst' };
+    L.out.read.innerHTML =
+      names[shape] + ' &nbsp;·&nbsp; width setting ' + fx(tau, 2) + ' s<br>' +
+      'time spread Δt (half-power width' + (shape === 'burst' ? ' of the envelope' : '') + '): <span class="b">' + fx(wt.w, 3) + ' s</span> &nbsp;|&nbsp; ' +
+      'bandwidth Δf (half-power width' + (shape === 'burst' ? ' of one lobe' : '') + '): <span class="g">' + (wf.edge ? '> ' : '') + fx(wf.w, 3) + ' Hz</span><br>' +
+      'Δt × Δf = <span class="y">' + (wf.edge ? '> ' : '') + fx(prod, 3) + '</span> &nbsp;<span class="dim">(narrower in time → wider in frequency; the product can\'t go below ≈ 0.441, the Gaussian value)</span>';
+  }
+});
+
+/* ---- Lab 9: aliasing ---------------------------------------------------- */
+lab('w9', {
+  state: { f0: 7, fs: 10 },
+  ratio: { time: w => (w < 640 ? 0.45 : 0.27), spec: 0.55, strobe: 0.88 },
+  animated: () => !REDUCE,
+  draw(L) {
+    const { f0, fs } = L.s;
+    const aliased = f0 > fs / 2 + 1e-9;
+    const fa = f0 - fs * Math.round(f0 / fs);                    // signed alias frequency, in (-fs/2, fs/2]
+    // --- time: true tone, samples, and the alias that fits the samples ---
+    {
+      const cv = L.cv.time, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const L0 = 10, R0 = W - 10, cy = H / 2 + 6, amp = H * 0.34;
+      const X = t => L0 + t * (R0 - L0);
+      seg(c, L0, cy, R0, cy, C.muted, 1);
+      const pa = [], pt = [], N = Math.max(300, Math.floor(R0 - L0));
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        pt.push(X(t), cy - amp * Math.cos(TAU * f0 * t));
+        pa.push(X(t), cy - amp * Math.cos(TAU * fa * t));
+      }
+      if (aliased) path(c, pa, C.magenta, 3);
+      path(c, pt, C.blue, 1.5);
+      for (let n = 0; n <= Math.floor(fs); n++) {
+        const t = n / fs; if (t > 1) break;
+        const y = cy - amp * Math.cos(TAU * f0 * t);
+        seg(c, X(t), cy, X(t), y, 'rgba(60,197,147,.8)', 1.4);
+        dot(c, X(t), y, 4.2, C.greenT, true);
+      }
+      if (W >= 560) text(c, '1 second of signal', L0, 14, C.muted, 11);
+      let lx = W - 12;
+      if (aliased) { text(c, 'alias (fits the dots)', lx, 14, C.magentaT, 12, 'right'); lx -= 135; }
+      text(c, 'samples', lx, 14, C.greenT, 12, 'right'); lx -= 70;
+      text(c, 'true tone', lx, 14, C.blueT, 12, 'right');
+    }
+    // --- spectrum: replicas and the folded alias ---
+    {
+      const cv = L.cv.spec, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const FM = 40, L0 = 8, R0 = W - 8, B0 = H - 40, T0 = 26;
+      const X = f => L0 + (f + FM) / (2 * FM) * (R0 - L0);
+      c.fillStyle = 'rgba(57,135,229,.10)'; c.fillRect(X(-fs / 2), T0 - 10, X(fs / 2) - X(-fs / 2), B0 - T0 + 10);
+      seg(c, L0, B0, R0, B0, C.muted, 1);
+      for (let f = -40; f <= 40; f += 10) { seg(c, X(f), B0, X(f), B0 + 4, C.muted, 1); text(c, String(f).replace('-', '−'), X(f), B0 + 16, C.muted, 10, 'center'); }
+      seg(c, X(-fs / 2), T0 - 10, X(-fs / 2), B0, C.faint, 1, [2, 3]);
+      seg(c, X(fs / 2), T0 - 10, X(fs / 2), B0, C.faint, 1, [2, 3]);
+      text(c, 'baseband (±fs/2)', X(0), T0 - 14, C.blueT, 11, 'center');
+      for (const sg of [1, -1]) for (let k = -4; k <= 4; k++) {
+        const f = sg * f0 + k * fs; if (Math.abs(f) > FM) continue;
+        const inBand = Math.abs(f) <= fs / 2 + 1e-9, truth = (k === 0);
+        const col = truth ? C.blue : C.magenta;
+        c.globalAlpha = truth || inBand ? 1 : 0.42;
+        seg(c, X(f), B0, X(f), T0 + 14, col, truth || inBand ? 3 : 2);
+        dot(c, X(f), T0 + 14, truth || inBand ? 4.5 : 3, col);
+        c.globalAlpha = 1;
+      }
+      text(c, 'blue = the real tone at ±f₀, magenta = copies every fs', 8, H - 5, C.muted, 10);
+    }
+    // --- strobe: the arrow seen only at each sample instant ---
+    {
+      const cv = L.cv.strobe, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const cx0 = W / 2, cy0 = H / 2 + 6, R = Math.min(W, H) * 0.34;
+      axes2(c, cx0, cy0, R * 1.2, C.grid); ring(c, cx0, cy0, R, C.muted, 1, [4, 5]);
+      const n0 = Math.floor(L.t * 2.2);
+      for (let j = 11; j >= 0; j--) {
+        const n = n0 - j, fr = (((f0 * n / fs) % 1) + 1) % 1, a = TAU * fr;
+        const x = cx0 + R * Math.cos(a), y = cy0 - R * Math.sin(a);
+        if (j === 0) { arrow(c, cx0, cy0, x, y, C.green, 2.6, 11); dot(c, x, y, 5.5, C.greenT, true); }
+        else { c.globalAlpha = 0.9 * (1 - j / 12); dot(c, x, y, 3.4, C.greenT); c.globalAlpha = 1; }
+      }
+      text(c, 'strobe view', 8, 15, C.muted, 11);
+      text(c, 'one dot per sample', 8, H - 6, C.muted, 10);
+    }
+    // --- readout ---
+    const step = 360 * f0 / fs, seen = wrap180(step);
+    L.out.read.innerHTML =
+      'f₀ = <span class="b">' + fx(f0, 1) + ' Hz</span> sampled at f<sub>s</sub> = <span class="g">' + fx(fs, 1) + ' Hz</span> (Nyquist limit f<sub>s</sub>/2 = ' + fx(fs / 2, 1) + ' Hz) → ' +
+      (aliased ? '<span class="m">ALIASED</span>' : '<span class="g">fine, no aliasing</span>') + '<br>' +
+      'apparent frequency |f₀ − f<sub>s</sub>·round(f₀/f<sub>s</sub>)| = <span class="m">' + fx(Math.abs(fa), 2) + ' Hz</span><br>' +
+      '<span class="dim">between samples the arrow really turns ' + fx(step, 0) + '°, but the strobe can only show it modulo 360°: it looks like ' + fx(seen, 0) + '° per frame' + (aliased && seen < 0 ? ' (backwards!)' : '') + '</span>';
+  }
+});
+
+/* ---- Lab 10: modulation ------------------------------------------------
+   s(t) = Re{ g(t) e^{j2 pi fc t} } = I cos(2 pi fc t) - Q sin(2 pi fc t),
+   with the complex envelope g = I + jQ chosen by modulation type. The
+   message phase ph = 2 pi fm t, and the carrier phase is R * ph because
+   fc = R * fm. */
+function envelope(type, m, beta, ph) {
+  switch (type) {
+    case 'am':  return [(1 + m * Math.cos(ph)) / (1 + m), 0];
+    case 'dsb': return [Math.cos(ph), 0];
+    case 'ssb': return [Math.cos(ph), Math.sin(ph)];
+    default:    return [Math.cos(beta * Math.sin(ph)), Math.sin(beta * Math.sin(ph))];
+  }
+}
+function modParams(L) {
+  const d = L.s.depth / 100, type = L.s.type;
+  return { type, m: Math.min(1, d), beta: d * 8, fc: L.s.fc, fm: L.s.fc / L.s.R, R: L.s.R };
+}
+function syncDepthLabel(L) {
+  const { type, m, beta } = modParams(L);
+  const name = { am: 'index m', dsb: '(not used)', ssb: '(not used)', fm: 'index β' }[type];
+  if (L.out.depthname) L.out.depthname.textContent = name;
+  setOut(L, 'depth', type === 'am' ? fx(m, 2) : (type === 'fm' ? fx(beta, 1) : '—'));
+}
+function buildModSound(L) {
+  const a = newAudio(L), ctx = Snd.ctx, { type } = modParams(L);
+  const car = ctx.createOscillator(), g = ctx.createGain();
+  car.type = 'sine'; g.gain.value = 0; car.connect(g); g.connect(a.master);
+  a.type = type; a.car = car; a.g = g; a.nodes.push(car);
+  if (type === 'ssb') {
+    g.gain.value = 0.2;
+  } else if (type === 'fm') {
+    g.gain.value = 0.2;
+    const mod = ctx.createOscillator(), mg = ctx.createGain();
+    mod.type = 'sine'; mod.connect(mg); mg.connect(car.frequency);      // message wiggles the carrier frequency
+    a.mod = mod; a.mg = mg; a.nodes.push(mod, mg); mod.start();
+  } else {
+    const mod = ctx.createOscillator(), mg = ctx.createGain();           // AM / DSB: message wiggles the carrier GAIN
+    mod.type = 'sine'; mod.connect(mg); mg.connect(g.gain);
+    a.mod = mod; a.mg = mg; a.nodes.push(mod, mg); mod.start();
+  }
+  car.start();
+  applyModSound(L, true);
+}
+function applyModSound(L, now) {
+  const a = L.audio; if (!a) return;
+  const { type, m, beta, fc, fm } = modParams(L), t = Snd.ctx.currentTime, k = now ? 0.001 : 0.02;
+  if (type === 'ssb') { a.car.frequency.setTargetAtTime(fc + fm, t, k); return; }
+  a.car.frequency.setTargetAtTime(fc, t, k);
+  a.mod.frequency.setTargetAtTime(fm, t, k);
+  if (type === 'fm') a.mg.gain.setTargetAtTime(beta * fm, t, k);         // peak deviation = beta * fm hertz
+  if (type === 'am') { a.g.gain.setTargetAtTime(0.2 / (1 + m), t, k); a.mg.gain.setTargetAtTime(0.2 * m / (1 + m), t, k); }
+  if (type === 'dsb') { a.g.gain.setTargetAtTime(0, t, k); a.mg.gain.setTargetAtTime(0.2, t, k); }
+}
+lab('w10', {
+  state: { type: 'am', fc: 440, R: 20, depth: 60 },
+  ratio: { wave: w => (w < 640 ? 0.45 : 0.27), iq: w => (w < 640 ? 0.85 : 0.9), spec: w => (w < 640 ? 0.7 : 0.9) },
+  animated: () => !REDUCE,
+  init(L) { syncDepthLabel(L); },
+  startSound: buildModSound,
+  stopSound: fadeStop,
+  onChange(L, k) {
+    syncDepthLabel(L);
+    if (!L.audio) return;
+    if (k === 'type') {                                                   // different graph: crossfade to a new one
+      const old = L.audio; L.audio = null;
+      old.master.gain.setTargetAtTime(0, Snd.ctx.currentTime, 0.015);
+      setTimeout(() => { old.nodes.forEach(n => { try { n.stop(); } catch (e) { /* ignore */ } try { n.disconnect(); } catch (e) { /* ignore */ } }); try { old.master.disconnect(); } catch (e) { /* ignore */ } }, 120);
+      buildModSound(L);
+    } else applyModSound(L, false);
+  },
+  draw(L) {
+    const p = modParams(L), { type, m, beta, R } = p;
+    const cur = (L.t / 3 * TAU) % (2 * TAU);                              // animated cursor: one message period = 3 s on screen
+    const nameOf = { am: 'AM', dsb: 'DSB-SC', ssb: 'SSB (upper sideband)', fm: 'FM' }[type];
+    // --- waveform over two message periods, with the envelope magnitude ---
+    {
+      const cv = L.cv.wave, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const L0 = 10, R0 = W - 10, cy = H / 2 + 6, amp = H * 0.36, span = 2 * TAU;
+      const X = ph => L0 + ph / span * (R0 - L0);
+      seg(c, L0, cy, R0, cy, C.muted, 1);
+      const env1 = [], env2 = [];
+      for (let i = 0; i <= 240; i++) { const ph = i / 240 * span, e = envelope(type, m, beta, ph), mg = Math.hypot(e[0], e[1]); env1.push(X(ph), cy - amp * mg); env2.push(X(ph), cy + amp * mg); }
+      path(c, env1, C.yellow, 1.4, [5, 4]); path(c, env2, C.yellow, 1.4, [5, 4]);
+      const NP = 1500, pts = [];
+      for (let i = 0; i <= NP; i++) {
+        const ph = i / NP * span, e = envelope(type, m, beta, ph), cp = R * ph;
+        pts.push(X(ph), cy - amp * (e[0] * Math.cos(cp) - e[1] * Math.sin(cp)));
+      }
+      path(c, pts, C.blue, 1.4);
+      seg(c, X(cur), cy - amp * 1.15, X(cur), cy + amp * 1.15, C.faint, 1, [2, 3]);
+      text(c, W < 560 ? nameOf.split(' ')[0] + ' signal s(t)' : nameOf + ' signal s(t) over two message periods', L0, 14, C.ink, 12);
+      text(c, W < 560 ? 'dashed: envelope' : 'dashed yellow: envelope |g(t)|', R0, 14, C.yellowT, 11, 'right');
+    }
+    // --- the I/Q plane: where the envelope arrow goes ---
+    {
+      const cv = L.cv.iq, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const cx0 = W / 2, cy0 = H / 2 + 6, u = Math.min(W, H) * 0.36;
+      axes2(c, cx0, cy0, u * 1.25, C.grid); ring(c, cx0, cy0, u, C.grid, 1, [3, 5]);
+      text(c, 'I', cx0 + u * 1.25 - 2, cy0 - 7, C.muted, 12, 'right'); text(c, 'Q', cx0 + 7, cy0 - u * 1.25 + 12, C.muted, 12);
+      const pts = [];
+      for (let i = 0; i <= 240; i++) { const e = envelope(type, m, beta, i / 240 * TAU); pts.push(cx0 + u * e[0], cy0 - u * e[1]); }
+      path(c, pts, 'rgba(232,172,44,.9)', 2);
+      const e = envelope(type, m, beta, cur);
+      arrow(c, cx0, cy0, cx0 + u * e[0], cy0 - u * e[1], C.green, 3, 12);
+      dot(c, cx0 + u * e[0], cy0 - u * e[1], 5.5, C.greenT, true);
+      text(c, 'complex envelope g(t) = I + jQ', 8, 14, C.ink, 12);
+      text(c, 'yellow path = where the arrow goes', 8, H - 6, C.yellowT, 10);
+    }
+    // --- spectrum lines around the carrier ---
+    {
+      const cv = L.cv.spec, c = cv.ctx, W = cv.w, H = cv.h;
+      cv.clear();
+      const L0 = 10, R0 = W - 10, B0 = H - 30, T0 = 26, NMAX = 6;
+      const X = n => L0 + (n + NMAX + 0.8) / (2 * NMAX + 1.6) * (R0 - L0);
+      seg(c, L0, B0, R0, B0, C.muted, 1);
+      const lines = [];
+      for (let n = -NMAX; n <= NMAX; n++) {
+        let a = 0;
+        if (type === 'am') a = n === 0 ? 1 / (1 + m) : (Math.abs(n) === 1 ? m / (2 * (1 + m)) : 0);
+        else if (type === 'dsb') a = Math.abs(n) === 1 ? 0.5 : 0;
+        else if (type === 'ssb') a = n === 1 ? 1 : 0;
+        else a = Math.abs(besselJ(n, beta));
+        lines.push([n, a]);
+      }
+      lines.forEach(([n, a]) => {
+        seg(c, X(n), B0 - 1, X(n), B0 - (B0 - T0) * Math.min(1, a) - (a > 0.004 ? 0 : 0), n === 0 ? C.green : C.yellow, 4);
+        if (a > 0.004) dot(c, X(n), B0 - (B0 - T0) * Math.min(1, a), 3.4, n === 0 ? C.greenT : C.yellowT);
+        if (Math.abs(n) % 2 === 0 || n === 1 || n === -1) text(c, n === 0 ? 'fc' : (n > 0 ? '+' + n : String(n).replace('-', '−')), X(n), B0 + 14, n === 0 ? C.greenT : C.muted, 10, 'center');
+      });
+      text(c, 'spectrum: lines at fc + n·fm', 8, 14, C.ink, 12);
+      text(c, 'n = offset in multiples of fm', R0, H - 4, C.muted, 10, 'right');
+    }
+    // --- readout ---
+    const fc = p.fc, fm = p.fm;
+    let info = '';
+    if (type === 'am') info = 'g = 1 + m cos(2π f<sub>m</sub> t), m = ' + fx(m, 2) + ' &nbsp;|&nbsp; carrier + two sidebands of height m/2 &nbsp;|&nbsp; power in sidebands = m²/(2+m²) = ' + fx(100 * m * m / (2 + m * m), 0) + '%';
+    if (type === 'dsb') info = 'g = cos(2π f<sub>m</sub> t) &nbsp;|&nbsp; the arrow swings through zero (the carrier flips sign) → no carrier line, two sidebands';
+    if (type === 'ssb') info = 'g = e<sup>j2π f<sub>m</sub> t</sup> &nbsp;|&nbsp; the arrow just spins → ONE line at f<sub>c</sub> + f<sub>m</sub> = ' + fx(fc + fm, 1) + ' Hz (half the bandwidth of AM)';
+    if (type === 'fm') info = 'g = e<sup>jβ sin(2π f<sub>m</sub> t)</sup>, β = ' + fx(beta, 1) + ' &nbsp;|&nbsp; |g| = 1 always → lines at |J<sub>n</sub>(β)| &nbsp;|&nbsp; Carson bandwidth ≈ 2 f<sub>m</sub>(β+1) = ' + fx(2 * fm * (beta + 1), 0) + ' Hz';
+    L.out.read.innerHTML =
+      '<span class="g">' + nameOf + '</span> &nbsp; f<sub>c</sub> = ' + fx(fc, 0) + ' Hz, f<sub>m</sub> = f<sub>c</sub>/' + R + ' = ' + fx(fm, 1) + ' Hz<br>' + info;
+  }
+});
+
+/* ---- Lab 11: an LTI system can only scale and rotate a phasor ---------- */
+lab('w11', {
+  state: { r: 1, spin: !REDUCE },
+  ratio: { main: w => (w < 620 ? 1.1 : 0.46), bode: w => (w < 620 ? 0.8 : 0.34) },
+  animated: L => L.s.spin,
+  draw(L) {
+    const r = L.s.r, mag = 1 / Math.sqrt(1 + r * r), ph = -Math.atan(r);   // |H|, angle of H
+    const cv = L.cv.main, c = cv.ctx, W = cv.w, H = cv.h;
+    cv.clear();
+    const narrow = W < 620;
+    const P = narrow ? { x: 0, y: 0, w: W, h: W * 0.6 } : { x: 0, y: 0, w: H, h: H };
+    const S = narrow ? { x: 0, y: W * 0.6, w: W, h: W * 0.5 } : { x: H + 12, y: 0, w: W - H - 12, h: H };
+    const wc = TAU * 0.4;                                                  // slow-motion reference: omega_c = 0.4 rev/s
+    const inAt = tt => wc * r * tt;
+    const a_in = inAt(L.t), a_out = a_in + ph;
+    // --- plane ---
+    const cx0 = P.x + P.w / 2, cy0 = P.y + P.h / 2, R = Math.min(P.w, P.h) * 0.36;
+    axes2(c, cx0, cy0, R * 1.3); ring(c, cx0, cy0, R, C.muted, 1.1, [4, 5]);
+    const ix = cx0 + R * Math.cos(a_in), iy = cy0 - R * Math.sin(a_in);
+    const ox = cx0 + R * mag * Math.cos(a_out), oy = cy0 - R * mag * Math.sin(a_out);
+    arcA(c, cx0, cy0, R * 0.3, a_in, a_out, C.yellow, 2.6);
+    arrow(c, cx0, cy0, ix, iy, C.blue, 3, 12);
+    arrow(c, cx0, cy0, ox, oy, C.green, 3.4, 12);
+    dot(c, ix, iy, 5, C.blueT, true); dot(c, ox, oy, 5, C.greenT, true);
+    text(c, 'in:', 8, 16, C.blueT, 12); expText(c, 'jωt', 8 + 24, 16, C.blueT, 13);
+    text(c, 'out: H(jω)·', 8, 34, C.greenT, 12); expText(c, 'jωt', 8 + 68, 34, C.greenT, 13);
+    // --- scopes: Re of input and output, newest at left ---
+    const x0 = S.x + 10, x1 = S.x + S.w - 4, cy = S.y + S.h / 2, amp = S.h * 0.34, WIN = 5, n = Math.max(60, Math.floor((x1 - x0) / 2));
+    c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(x0 - 6, S.y + 2, x1 - x0 + 10, S.h - 4);
+    seg(c, x0 - 6, cy, x1 + 4, cy, C.muted, 1);
+    seg(c, x0 - 6, cy - amp, x1 + 4, cy - amp, C.grid, 1, [3, 4]); seg(c, x0 - 6, cy + amp, x1 + 4, cy + amp, C.grid, 1, [3, 4]);
+    const pi_ = [], po_ = [];
+    for (let i = 0; i <= n; i++) {
+      const tau = i / n * WIN, ai = inAt(L.t - tau);
+      pi_.push(x0 + i * (x1 - x0) / n, cy - amp * Math.cos(ai));
+      po_.push(x0 + i * (x1 - x0) / n, cy - amp * mag * Math.cos(ai + ph));
+    }
+    path(c, pi_, C.blue, 2.2); path(c, po_, C.green, 2.6);
+    dot(c, x0, cy - amp * Math.cos(a_in), 4.5, C.blueT, true); dot(c, x0, cy - amp * mag * Math.cos(a_out), 4.5, C.greenT, true);
+    text(c, 'Re of input (blue) and of output (green), newest at left', x0 - 2, S.y + 15, C.muted, 11);
+    // --- Bode plots ---
+    {
+      const bv = L.cv.bode, b = bv.ctx, BW = bv.w, BH = bv.h;
+      bv.clear();
+      const gap = 28, pw = (BW - gap - 42) / 2;
+      const panels = [
+        { x: 44, label: 'magnitude (dB)', y0: 0, y1: -40, fn: rr => 20 * Math.log10(1 / Math.sqrt(1 + rr * rr)), col: C.green, ticks: [0, -10, -20, -30, -40] },
+        { x: 44 + pw + gap, label: 'phase of H (degrees)', y0: 0, y1: -90, fn: rr => -Math.atan(rr) * 180 / PI, col: C.yellow, ticks: [0, -30, -60, -90] }
+      ];
+      const T0 = 24, B0 = BH - 38;
+      panels.forEach(pn => {
+        const X = rr => pn.x + (Math.log10(rr) - Math.log10(0.05)) / (Math.log10(20) - Math.log10(0.05)) * (pw - 44 + 34);
+        const Y = v => T0 + (pn.y0 - v) / (pn.y0 - pn.y1) * (B0 - T0);
+        const right = pn.x + (pw - 10);
+        seg(b, pn.x, B0, right, B0, C.muted, 1); seg(b, pn.x, T0, pn.x, B0, C.muted, 1);
+        pn.ticks.forEach(tk => { seg(b, pn.x, Y(tk), right, Y(tk), C.grid, 1, [2, 4]); text(b, String(tk).replace('-', '−'), pn.x - 5, Y(tk) + 4, C.muted, 10, 'right'); });
+        [0.1, 1, 10].forEach(rr => { const xx = Math.min(right, X(rr)); seg(b, xx, B0, xx, B0 + 4, C.muted, 1); text(b, String(rr), xx, B0 + 16, C.muted, 10, 'center'); });
+        const pts = [];
+        for (let i = 0; i <= 120; i++) { const rr = 0.05 * Math.pow(400, i / 120); pts.push(Math.min(right, X(rr)), Y(pn.fn(rr))); }
+        path(b, pts, pn.col, 2.4);
+        const xr = Math.min(right, X(r));
+        seg(b, xr, T0, xr, B0, C.faint, 1);
+        dot(b, xr, Y(pn.fn(r)), 5, pn.col === C.green ? C.greenT : C.yellowT, true);
+        text(b, pn.label, pn.x + 4, 14, C.ink, 12);
+        text(b, 'ω / ωc  (log scale)', right, BH - 5, C.muted, 10, 'right');
+      });
+    }
+    // --- readout ---
+    const hr = 1 / (1 + r * r), hi = -r / (1 + r * r);
+    L.out.read.innerHTML =
+      'ω/ω<sub>c</sub> = <span class="y">' + fx(r, 2) + '</span> &nbsp;→&nbsp; H(jω) = 1 / (1 + j·' + fx(r, 2) + ') = ' + cplx(hr, hi) + '<br>' +
+      '<span class="g">|H| = ' + fx(mag, 3) + '</span> (' + fx(20 * Math.log10(mag), 1) + ' dB) &nbsp;|&nbsp; <span class="y">∠H = ' + fx(ph * 180 / PI, 1) + '°</span> &nbsp;|&nbsp; ' +
+      '<span class="dim">output = input × H: shrunk by ' + fx(mag, 3) + ', rotated by ' + fx(ph * 180 / PI, 1) + '°, frequency unchanged</span>';
+  }
+});
+
+/* ------------------------------------------------------------------ 5 */
+/* Page chrome: progress bar, section chips, math typesetting, start the loop */
+(function chrome() {
+  const bar = document.getElementById('progress');
+  const chips = Array.prototype.slice.call(document.querySelectorAll('.chips a'));
+  const secs = chips.map(a => document.getElementById(a.dataset.sec));
+  function onScroll() {
+    const h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    if (bar) bar.style.width = (max > 0 ? Math.min(100, 100 * h.scrollTop / max) : 0) + '%';
+    let cur = -1;
+    secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top < 140) cur = i; });
+    chips.forEach((a, i) => a.classList.toggle('on', i === cur));
+    if (cur >= 0) { const a = chips[cur], box = a.parentElement; box.scrollLeft = a.offsetLeft - box.clientWidth / 2 + a.clientWidth / 2; }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+  if (window.renderMathInElement) {
+    try {
+      window.renderMathInElement(document.body, {
+        delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
+        throwOnError: false
+      });
+    } catch (e) { console.warn('KaTeX failed:', e); }
+  }
+})();
+
+requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
